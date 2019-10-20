@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+import argparse
+import asyncio
+import logging
+import mimetypes
+import os.path
+
+import aiotus
+
+
+async def main(args: argparse.Namespace) -> None:
+    with open(args.file, "rb") as file:
+        location = await aiotus.upload(args.endpoint, file, metadata)
+
+    if location:
+        logging.info(f'File uploaded to "{location}".')
+    else:
+        logging.error("File upload failed.")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="tus (tus.io) client from the aiotus python package."
+    )
+    parser.add_argument("endpoint", type=str, help="creation URL of the tus server")
+    parser.add_argument("file", type=str, help="file to upload")
+    args = parser.parse_args()
+
+    metadata = {"filename": os.path.basename(args.file)}
+
+    mime_type, _ = mimetypes.guess_type(args.file)
+    if mime_type:
+        metadata["mime_type"] = mime_type
+
+    logging.basicConfig(level=logging.INFO)
+
+    try:
+        asyncio.run(main(args))
+    except KeyboardInterrupt:
+        pass

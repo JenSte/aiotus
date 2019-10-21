@@ -6,24 +6,19 @@ black:
 flake8-check:
 	@echo Running flake8...
 	@flake8 \
-	    --max-line-length=88 \
-	    --ignore=E203 \
-	    aiotus scripts/aiotus-client tests
+	    aiotus scripts/* tests
 
 isort-check:
 	@echo Running isort...
 	@isort \
-	    --check-only \
-	    --diff \
-	    --multi-line 3 \
 	    --recursive \
-	    aiotus scripts/aiotus-client tests
+	    aiotus scripts/* tests
 
 mypy-check:
 	@echo Running mypy...
 	@mypy \
 	    --strict \
-	    aiotus scripts/aiotus-client
+	    aiotus scripts/*
 	@mypy \
 	    tests
 

@@ -1,5 +1,7 @@
 # Asynchronous tus client library
 
+[![Actions Status](https://github.com/JenSte/aiotus/workflows/Continuous%20Integration/badge.svg?branch=master)](https://github.com/JenSte/aiotus/actions)
+
 ``aiotus`` implements the client side of the [tus](https://tus.io) protocol.
 
 ## Features

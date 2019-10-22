@@ -1,4 +1,4 @@
-name: Package
+name: Package and Publish
 on: [push]
 jobs:
   package:
@@ -16,3 +16,10 @@ jobs:
     - name: Package
       run: |
         python setup.py sdist bdist_wheel
+    - name: Publish to TestPyPi
+      if: github.ref == 'refs/heads/master'
+      uses: pypa/gh-action-pypi-publish@v1.0.0a0
+      with:
+        user: __token__
+        password: ${{ secrets.test_pypi_token }}
+        repository_url: https://test.pypi.org/legacy/

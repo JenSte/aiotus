@@ -31,4 +31,11 @@ jobs:
         mypy tests
     - name: Run pytest
       run: |
-        PYTHONPATH=. pytest --cov=aiotus tests
+        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
+    - name: Upload coverage information
+      # https://github.com/codecov/codecov-action/issues/23
+      run: >
+        bash <(curl -s https://codecov.io/bash)
+        -f ./coverage.xml
+        -t ${{ secrets.codecov_token }}
+        -B "${{ github.ref }}"

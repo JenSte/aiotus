@@ -3,6 +3,7 @@ tenacity
 
 black
 coverage
+codecov
 flake8
 grip
 isort

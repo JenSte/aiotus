@@ -34,6 +34,20 @@ with open("image.jpeg", "rb") as f:
 * [aiohttp](https://pypi.org/project/aiohttp)
 * [tenacity](https://pypi.org/project/tenacity)
 
+## Installation
+
+Install ``aiotus`` from [PyPi](https://pypi.org/project/aiotus):
+
+```
+pip install aiotus
+```
+
+Development versions can be installed from [TestPyPi](https://test.pypi.org/project/aiotus):
+
+```
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple aiotus
+```
+
 ## License
 
 ``aiotus`` is licensed under the Apache 2 license.

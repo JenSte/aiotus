@@ -1,4 +1,5 @@
 .coverage
+.eggs/
 .mypy_cache/
 aiotus.egg-info/
 build/

@@ -13,6 +13,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/JenSte/aiotus",
     packages=setuptools.find_packages(),
+    package_data={'aiotus': ['py.typed']},
+    include_package_data=True,
+    zip_safe=False,
     scripts=["scripts/aiotus-client"],
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -22,6 +25,7 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Topic :: Internet :: WWW/HTTP",
+        "Typing :: Typed",
     ],
     python_requires=">=3.7",
     install_requires=[

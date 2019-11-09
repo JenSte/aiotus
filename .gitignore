@@ -1,8 +1,11 @@
 .coverage
 .eggs/
 .mypy_cache/
+.xprocess/
 aiotus.egg-info/
 build/
 coverage_html/
 dist/
 venv/
+tusd
+tusd_linux_*.tar.gz

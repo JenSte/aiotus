@@ -1,8 +1,11 @@
 import base64
+import dataclasses
 import io
 
 import aiohttp
 import pytest  # type: ignore
+import yarl
+from xprocess import ProcessStarter  # type: ignore
 
 
 @pytest.fixture
@@ -85,3 +88,35 @@ async def tus_server(aiohttp_server):
 def memory_file():
     """Dummy data to use during tests."""
     return io.BytesIO(b"\x00\x01\x02\x03")
+
+
+@dataclasses.dataclass
+class TusServer:
+
+    # The URL where the server is listening on.
+    url: yarl.URL
+
+
+@pytest.fixture(scope="module")
+def tusd(pytestconfig, xprocess):
+    """Start the tusd (tus.io reference implementation) and yield the upload URL.
+
+    Assumes that the tusd executable is located in the pytest rootdir.
+    """
+
+    host = "0.0.0.0"
+    port = "8080"
+    basepath = "/files/"
+
+    executable = pytestconfig.rootdir.join("/tusd")
+
+    class Starter(ProcessStarter):
+        pattern = "You can now upload files to:"
+        args = [executable, "-host", host, "-port", port, "-base-path", basepath]
+
+    server_name = "tusd-server"
+
+    xprocess.ensure(server_name, Starter)
+    server = TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
+    yield server
+    xprocess.getinfo(server_name).terminate()

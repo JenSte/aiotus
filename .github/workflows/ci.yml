@@ -29,6 +29,9 @@ jobs:
       run: |
         mypy --strict aiotus scripts/*
         mypy tests
+    - name: Download tusd
+      run: |
+        make tusd
     - name: Run pytest
       run: |
         PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests

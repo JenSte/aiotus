@@ -118,3 +118,16 @@ class TestUploadFile:
         with open(__file__, "rb") as file:
             data = file.read()
             assert tus_server["data"] == data
+
+    async def test_upload_tusd(self, tusd, memory_file):
+        """Test upload to the tusd server."""
+
+        data = memory_file.getvalue()
+
+        location = await aiotus.upload(tusd.url, memory_file)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(location) as response:
+                body = await response.read()
+
+                assert body == data

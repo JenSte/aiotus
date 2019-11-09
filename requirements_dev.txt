@@ -11,6 +11,7 @@ mypy
 pytest
 pytest-aiohttp
 pytest-cov
+pytest-xprocess
 
 setuptools
 twine

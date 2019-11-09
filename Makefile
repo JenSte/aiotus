@@ -22,7 +22,7 @@ mypy-check:
 	@mypy \
 	    tests
 
-test .coverage:
+test .coverage: tusd
 	pytest --cov=aiotus tests
 
 coverage_html/index.html: .coverage
@@ -34,16 +34,35 @@ venv:
 	    pip3 install -r requirements_dev.txt; \
 	    pip3 install -e .
 
+TUSD_VERSION = v1.0.2
+TUSD_ARCH = amd64
+TUSD_ARCHIVE = tusd_linux_${TUSD_ARCH}.tar.gz
+
+${TUSD_ARCHIVE}:
+	wget --quiet https://github.com/tus/tusd/releases/download/${TUSD_VERSION}/tusd_linux_${TUSD_ARCH}.tar.gz
+
+tusd: ${TUSD_ARCHIVE}
+	tar -xf ${TUSD_ARCHIVE} --strip-components 1 tusd_linux_${TUSD_ARCH}/tusd
+	touch $@
+
+
 clean:
 	@rm -f \
 	    .coverage
 	@rm -rf \
 	    .mypy_cache \
 	    .pytest_cache \
+	    .xprocess \
 	    aiotus.egg-info \
 	    build \
 	    coverage_html \
-	    dist \
+	    dist
+
+veryclean: clean
+	@rm -f \
+	    tusd \
+	    ${TUSD_ARCHIVE}
+	@rm -rf \
 	    venv
 
 .PHONY: \

@@ -6,6 +6,7 @@ import typing
 import aiohttp
 import yarl
 
+from . import types
 from .log import logger
 
 # The version of the tus protocol we implement.
@@ -17,6 +18,7 @@ async def create(
     url: yarl.URL,
     file: typing.BinaryIO,
     metadata: typing.Dict[str, str],
+    ssl: types.SSLArgument = None,
 ) -> yarl.URL:
     """Create an upload.
 
@@ -24,6 +26,7 @@ async def create(
     :param location: The creation endpoint of the server.
     :param file: The file object to upload.
     :param metadata: Additional metadata for the upload.
+    :param ssl: SSL validation mode, passed on to aiohttp.
     :return: The URL to upload the data to.
     """
 
@@ -52,7 +55,7 @@ async def create(
         headers["Upload-Metadata"] = ", ".join(pairs)
 
     logger.debug(f"Creating upload...")
-    async with await session.post(url, headers=headers) as response:
+    async with await session.post(url, headers=headers, ssl=ssl) as response:
         if response.status != 201:
             raise aiohttp.ClientResponseError(
                 response.request_info,
@@ -68,18 +71,21 @@ async def create(
         return yarl.URL(response.headers["Location"])
 
 
-async def offset(session: aiohttp.ClientSession, location: yarl.URL) -> int:
+async def offset(
+    session: aiohttp.ClientSession, location: yarl.URL, ssl: types.SSLArgument = None
+) -> int:
     """Get the number of uploaded bytes.
 
     :param session: HTTP session to use for connections.
     :param location: The upload endpoint to query.
+    :param ssl: SSL validation mode, passed on to aiohttp.
     :return: The number of bytes that are already on the server.
     """
 
     headers = {"Tus-Resumable": TUS_PROTOCOL_VERSION}
 
     logger.debug(f'Getting offset of "{location}"...')
-    async with await session.head(location, headers=headers) as response:
+    async with await session.head(location, headers=headers, ssl=ssl) as response:
         response.raise_for_status()
 
         if "Upload-Offset" not in response.headers:
@@ -107,6 +113,7 @@ async def upload_remaining(
     location: yarl.URL,
     file: typing.BinaryIO,
     current_offset: int,
+    ssl: types.SSLArgument = None,
 ) -> None:
     """Upload remaining data to the server.
 
@@ -114,6 +121,7 @@ async def upload_remaining(
     :param location: The endpoint to upload to.
     :param file: The file object to upload.
     :param current_offset: The number of bytes already uploaded.
+    :param ssl: SSL validation mode, passed on to aiohttp.
     """
 
     total_size = file.seek(0, io.SEEK_END)
@@ -129,21 +137,27 @@ async def upload_remaining(
     }
 
     logger.debug(f'Uploading {outstanding} bytes to "{location}"...')
-    async with await session.patch(location, headers=headers, data=file) as response:
+    async with await session.patch(
+        location, headers=headers, data=file, ssl=ssl
+    ) as response:
         response.raise_for_status()
 
 
 async def upload_buffer(
-    session: aiohttp.ClientSession, location: yarl.URL, file: typing.BinaryIO
+    session: aiohttp.ClientSession,
+    location: yarl.URL,
+    file: typing.BinaryIO,
+    ssl: types.SSLArgument = None,
 ) -> None:
     """Upload data to the server.
 
     :param session: HTTP session to use for connections.
     :param location: The endpoint to upload to.
     :param file: The file object to upload.
+    :param ssl: SSL validation mode, passed on to aiohttp.
     """
 
-    current_offset = await offset(session, location)
+    current_offset = await offset(session, location, ssl=ssl)
 
     logger.debug(f'Resuming upload of "{location}" at offset {current_offset}..."')
 
@@ -153,8 +167,8 @@ async def upload_buffer(
 
     if hasattr(file, "getbuffer"):
         file = io.BytesIO(file.getbuffer())  # type: ignore
-        await upload_remaining(session, location, file, current_offset)
+        await upload_remaining(session, location, file, current_offset, ssl=ssl)
     else:
         fd = os.dup(file.fileno())
         with os.fdopen(fd, "rb") as file:
-            await upload_remaining(session, location, file, current_offset)
+            await upload_remaining(session, location, file, current_offset, ssl=ssl)

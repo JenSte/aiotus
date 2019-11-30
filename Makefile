@@ -22,7 +22,7 @@ mypy-check:
 	@mypy \
 	    tests
 
-test .coverage: tusd
+test .coverage: tusd tests/nginx.key tests/selfsigned.crt
 	pytest --cov=aiotus tests
 
 coverage_html/index.html: .coverage
@@ -45,6 +45,13 @@ tusd: ${TUSD_ARCHIVE}
 	tar -xf ${TUSD_ARCHIVE} --strip-components 1 tusd_linux_${TUSD_ARCH}/tusd
 	touch $@
 
+tests/nginx.key tests/selfsigned.crt:
+	openssl req \
+	    -new -x509 -nodes\
+	    -days 3650 \
+	    -subj '/CN=localhost' \
+	    -keyout tests/nginx.key \
+	    -out tests/selfsigned.crt
 
 clean:
 	@rm -f \
@@ -61,7 +68,9 @@ clean:
 veryclean: clean
 	@rm -f \
 	    tusd \
-	    ${TUSD_ARCHIVE}
+	    ${TUSD_ARCHIVE} \
+	    tests/nginx.key \
+	    tests/selfsigned.crt
 	@rm -rf \
 	    venv
 
@@ -71,4 +80,5 @@ veryclean: clean
 	flake8-check \
 	isort-check \
 	mypy-check \
-	test
+	test \
+	veryclean

@@ -6,7 +6,7 @@ import aiohttp
 import tenacity  # type: ignore
 import yarl
 
-from . import lowlevel
+from . import lowlevel, types
 from .log import logger
 
 
@@ -22,6 +22,13 @@ class UploadConfiguration:
     # Exponential backoff is used in case of communication errors,
     # but the time between retries is caped by this value.
     max_retry_period_seconds: float = 60.0
+
+    # 'ssl' argument passed on to the aiohttp calls.
+    #
+    # This can be None, False, or an instance of ssl.SSLContext, see
+    # https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets
+    # for the different meanings.
+    ssl: types.SSLArgument = None
 
 
 def _make_log_before_function(s: str) -> typing.Callable[[str], None]:
@@ -95,13 +102,13 @@ async def upload(
         async with client_session:
             location: yarl.URL
             location = await retrying_create.call(
-                lowlevel.create, client_session, url, file, metadata
+                lowlevel.create, client_session, url, file, metadata, ssl=config.ssl
             )
             if not location.is_absolute():
                 location = url / location.path
 
             await retrying_upload_file.call(
-                lowlevel.upload_buffer, client_session, location, file
+                lowlevel.upload_buffer, client_session, location, file, ssl=config.ssl
             )
 
             return location

@@ -1,6 +1,9 @@
 import base64
 import dataclasses
 import io
+import os.path
+import tempfile
+from typing import Optional
 
 import aiohttp
 import pytest  # type: ignore
@@ -96,6 +99,9 @@ class TusServer:
     # The URL where the server is listening on.
     url: yarl.URL
 
+    # The path of the certificate file of the server, if TLS is used.
+    certificate: Optional[str] = None
+
 
 @pytest.fixture(scope="module")
 def tusd(pytestconfig, xprocess):
@@ -120,3 +126,81 @@ def tusd(pytestconfig, xprocess):
     server = TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
     yield server
     xprocess.getinfo(server_name).terminate()
+
+
+# Template for the nginx configuration file. Stripped-down from
+# https://github.com/tus/tusd/blob/master/examples/nginx.conf
+_nginx_conf = """
+    pid nginx.pid;
+    daemon off;
+    error_log /dev/null;
+
+    events {{
+    }}
+
+    http {{
+        client_body_temp_path ./client_body;
+        proxy_temp_path ./proxy;
+        fastcgi_temp_path ./fastcgi;
+        uwsgi_temp_path ./uwsgi;
+        scgi_temp_path ./scgi;
+
+        access_log off;
+
+        server {{
+            listen {port} ssl;
+            server_name _;
+            ssl_certificate {crt};
+            ssl_certificate_key {key};
+
+            location / {{
+                # Forward incoming requests to local tusd instance
+                proxy_pass {tusd_url};
+
+                # Disable request and response buffering
+                proxy_request_buffering  off;
+                proxy_buffering off;
+                proxy_http_version 1.1;
+
+                # Add X-Forwarded-* headers
+                proxy_set_header X-Forwarded-Host $hostname;
+                proxy_set_header X-Forwarded-Proto $scheme;
+
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection "upgrade";
+                client_max_body_size 0;
+            }}
+        }}
+    }}
+"""
+
+
+@pytest.fixture(scope="module")
+def nginx_proxy(xprocess, tusd):
+    """Start an nginx proxy in front of tusd that does TLS termination."""
+
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    fmt = {
+        "crt": os.path.join(test_dir, "selfsigned.crt"),
+        "key": os.path.join(test_dir, "nginx.key"),
+        "port": 8443,
+        "tusd_url": str(tusd.url),
+    }
+    conf = _nginx_conf.format(**fmt)
+
+    with tempfile.TemporaryDirectory() as d:
+        conf_file = os.path.join(d, "nginx.conf")
+        with open(conf_file, "w") as f:
+            f.write(conf)
+
+        class Starter(ProcessStarter):
+            pattern = "could not open error log file"
+            args = ["nginx", "-p", d, "-c", "nginx.conf"]
+
+        server_name = "nginx-server"
+
+        xprocess.ensure(server_name, Starter)
+        server = TusServer(yarl.URL(f"https://localhost:{fmt['port']}"))
+        server.certificate = fmt["crt"]
+        yield server
+        xprocess.getinfo(server_name).terminate()

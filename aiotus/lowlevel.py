@@ -1,7 +1,7 @@
 import base64
 import io
 import os
-import typing
+from typing import BinaryIO, Dict
 
 import aiohttp
 import yarl
@@ -16,8 +16,8 @@ TUS_PROTOCOL_VERSION = "1.0.0"
 async def create(
     session: aiohttp.ClientSession,
     url: yarl.URL,
-    file: typing.BinaryIO,
-    metadata: typing.Dict[str, str],
+    file: BinaryIO,
+    metadata: Dict[str, str],
     ssl: types.SSLArgument = None,
 ) -> yarl.URL:
     """Create an upload.
@@ -111,7 +111,7 @@ async def offset(
 async def upload_remaining(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    file: typing.BinaryIO,
+    file: BinaryIO,
     current_offset: int,
     ssl: types.SSLArgument = None,
 ) -> None:
@@ -146,7 +146,7 @@ async def upload_remaining(
 async def upload_buffer(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    file: typing.BinaryIO,
+    file: BinaryIO,
     ssl: types.SSLArgument = None,
 ) -> None:
     """Upload data to the server.

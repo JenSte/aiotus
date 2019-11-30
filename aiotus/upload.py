@@ -1,6 +1,6 @@
 import asyncio
 import dataclasses
-import typing
+from typing import BinaryIO, Callable, Dict, Optional
 
 import aiohttp
 import tenacity  # type: ignore
@@ -31,7 +31,7 @@ class UploadConfiguration:
     ssl: types.SSLArgument = None
 
 
-def _make_log_before_function(s: str) -> typing.Callable[[str], None]:
+def _make_log_before_function(s: str) -> Callable[[str], None]:
     def log(retry_state: tenacity.RetryCallState) -> None:
 
         if retry_state.attempt_number > 1:
@@ -42,7 +42,7 @@ def _make_log_before_function(s: str) -> typing.Callable[[str], None]:
     return log
 
 
-def _make_log_before_sleep_function(s: str) -> typing.Callable[[str], None]:
+def _make_log_before_sleep_function(s: str) -> Callable[[str], None]:
     def log(retry_state: tenacity.RetryCallState) -> None:
         duration = retry_state.next_action.sleep
         if retry_state.outcome.failed:
@@ -58,11 +58,11 @@ def _make_log_before_sleep_function(s: str) -> typing.Callable[[str], None]:
 
 async def upload(
     endpoint: str,
-    file: typing.BinaryIO,
-    metadata: typing.Optional[typing.Dict[str, str]] = None,
-    client_session: typing.Optional[aiohttp.ClientSession] = None,
+    file: BinaryIO,
+    metadata: Optional[Dict[str, str]] = None,
+    client_session: Optional[aiohttp.ClientSession] = None,
     config: UploadConfiguration = UploadConfiguration(),
-) -> typing.Optional[yarl.URL]:
+) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 
     In case of a communication error, this function retries the upload.

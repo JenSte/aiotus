@@ -17,7 +17,7 @@ setuptools.setup(
     package_data={"aiotus": ["py.typed"]},
     include_package_data=True,
     zip_safe=False,
-    scripts=["scripts/aiotus-client"],
+    entry_points={"console_scripts": ["aiotus-client=aiotus.entrypoint:aiotus_client"]},
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",

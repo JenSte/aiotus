@@ -38,7 +38,7 @@ class TestCreate:
         app.router.add_route("POST", "/wrong_status", handler_wrong_status)
         server = await aiohttp_server(app)
 
-        with pytest.raises(aiohttp.ClientResponseError) as excinfo:
+        with pytest.raises(aiotus.ProtocolError) as excinfo:
             endpoint = server.make_url("/wrong_status")
 
             async with aiohttp.ClientSession() as session:

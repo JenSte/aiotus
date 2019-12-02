@@ -56,12 +56,8 @@ async def create(
     logger.debug(f"Creating upload...")
     async with await session.post(url, headers=headers, ssl=ssl) as response:
         if response.status != 201:
-            raise aiohttp.ClientResponseError(
-                response.request_info,
-                response.history,
-                status=response.status,
-                message="Wrong status code, expected 201.",
-                headers=response.headers,
+            raise common.ProtocolError(
+                f"Wrong status code {response.status}, expected 201."
             )
 
         if "Location" not in response.headers:

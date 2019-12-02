@@ -52,7 +52,6 @@ class TestUploadFile:
         """Test the retry functionality."""
 
         # Make the server fail a few times to test the retry logic.
-        tus_server["retries_create"] = 3
         tus_server["retries_offset"] = 3
         tus_server["retries_upload"] = 3
 

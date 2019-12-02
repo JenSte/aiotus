@@ -15,10 +15,10 @@ class TestTLS:
         # Make sure we actually use encryption, access via plain
         # HTTP shall fail.
         async with aiohttp.ClientSession() as session:
-            with pytest.raises(aiohttp.ClientResponseError) as excinfo:
+            with pytest.raises(aiotus.ProtocolError) as excinfo:
                 url = nginx_proxy.url.with_scheme("http")
                 await aiotus.creation.create(session, url, memory_file, {})
-        assert "Wrong status code, expected 201." == excinfo.value.message
+        assert "Wrong status code" in str(excinfo.value)
 
         # As we use a self-signed certificate, the connection will fail.
         async with aiohttp.ClientSession() as session:

@@ -1,78 +1,16 @@
-import base64
 import io
 import os
-from typing import BinaryIO, Dict
+from typing import BinaryIO
 
 import aiohttp
 import yarl
 
-from . import types
+from . import common
 from .log import logger
-
-# The version of the tus protocol we implement.
-TUS_PROTOCOL_VERSION = "1.0.0"
-
-
-async def create(
-    session: aiohttp.ClientSession,
-    url: yarl.URL,
-    file: BinaryIO,
-    metadata: Dict[str, str],
-    ssl: types.SSLArgument = None,
-) -> yarl.URL:
-    """Create an upload.
-
-    :param session: HTTP session to use for connections.
-    :param location: The creation endpoint of the server.
-    :param file: The file object to upload.
-    :param metadata: Additional metadata for the upload.
-    :param ssl: SSL validation mode, passed on to aiohttp.
-    :return: The URL to upload the data to.
-    """
-
-    total_size = file.seek(0, io.SEEK_END)
-
-    headers = {"Tus-Resumable": TUS_PROTOCOL_VERSION, "Upload-Length": str(total_size)}
-
-    if metadata:
-        # Check metadata keys before we proceed.
-        for k in metadata:
-            if not k.isascii():
-                raise ValueError("Metadata keys must only contain ASCII characters.")
-
-            if " " in k:
-                raise ValueError("Metadata keys must not contain spaces.")
-
-            if "," in k:
-                raise ValueError("Metadata keys must not contain commas.")
-
-        def encode_value(value: str) -> str:
-            encoded_bytes = base64.b64encode(value.encode())
-            encoded_string = encoded_bytes.decode()
-            return encoded_string
-
-        pairs = [f"{k} {encode_value(v)}" for k, v in metadata.items()]
-        headers["Upload-Metadata"] = ", ".join(pairs)
-
-    logger.debug(f"Creating upload...")
-    async with await session.post(url, headers=headers, ssl=ssl) as response:
-        if response.status != 201:
-            raise aiohttp.ClientResponseError(
-                response.request_info,
-                response.history,
-                status=response.status,
-                message="Wrong status code, expected 201.",
-                headers=response.headers,
-            )
-
-        if "Location" not in response.headers:
-            raise RuntimeError('Upload created, but no "Location" header in response.')
-
-        return yarl.URL(response.headers["Location"])
 
 
 async def offset(
-    session: aiohttp.ClientSession, location: yarl.URL, ssl: types.SSLArgument = None
+    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None
 ) -> int:
     """Get the number of uploaded bytes.
 
@@ -82,7 +20,7 @@ async def offset(
     :return: The number of bytes that are already on the server.
     """
 
-    headers = {"Tus-Resumable": TUS_PROTOCOL_VERSION}
+    headers = {"Tus-Resumable": common.TUS_PROTOCOL_VERSION}
 
     logger.debug(f'Getting offset of "{location}"...')
     async with await session.head(location, headers=headers, ssl=ssl) as response:
@@ -113,7 +51,7 @@ async def upload_remaining(
     location: yarl.URL,
     file: BinaryIO,
     current_offset: int,
-    ssl: types.SSLArgument = None,
+    ssl: common.SSLArgument = None,
 ) -> None:
     """Upload remaining data to the server.
 
@@ -130,7 +68,7 @@ async def upload_remaining(
     file.seek(current_offset, io.SEEK_SET)
 
     headers = {
-        "Tus-Resumable": TUS_PROTOCOL_VERSION,
+        "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
         "Upload-Offset": str(current_offset),
         "Content-Length": str(outstanding),
         "Content-Type": "application/offset+octet-stream",
@@ -147,7 +85,7 @@ async def upload_buffer(
     session: aiohttp.ClientSession,
     location: yarl.URL,
     file: BinaryIO,
-    ssl: types.SSLArgument = None,
+    ssl: common.SSLArgument = None,
 ) -> None:
     """Upload data to the server.
 

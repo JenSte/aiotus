@@ -6,7 +6,7 @@ import aiohttp
 import tenacity  # type: ignore
 import yarl
 
-from . import lowlevel, types
+from . import common, core, creation
 from .log import logger
 
 
@@ -28,7 +28,7 @@ class UploadConfiguration:
     # This can be None, False, or an instance of ssl.SSLContext, see
     # https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets
     # for the different meanings.
-    ssl: types.SSLArgument = None
+    ssl: common.SSLArgument = None
 
 
 def _make_log_before_function(s: str) -> Callable[[str], None]:
@@ -102,13 +102,13 @@ async def upload(
         async with client_session:
             location: yarl.URL
             location = await retrying_create.call(
-                lowlevel.create, client_session, url, file, metadata, ssl=config.ssl
+                creation.create, client_session, url, file, metadata, ssl=config.ssl
             )
             if not location.is_absolute():
                 location = url / location.path
 
             await retrying_upload_file.call(
-                lowlevel.upload_buffer, client_session, location, file, ssl=config.ssl
+                core.upload_buffer, client_session, location, file, ssl=config.ssl
             )
 
             return location

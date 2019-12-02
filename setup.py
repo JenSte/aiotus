@@ -14,7 +14,7 @@ setuptools.setup(
     url="https://github.com/JenSte/aiotus",
     license="Apache 2",
     packages=setuptools.find_packages(),
-    package_data={'aiotus': ['py.typed']},
+    package_data={"aiotus": ["py.typed"]},
     include_package_data=True,
     zip_safe=False,
     scripts=["scripts/aiotus-client"],
@@ -29,12 +29,7 @@ setuptools.setup(
         "Typing :: Typed",
     ],
     python_requires=">=3.7",
-    install_requires=[
-        "aiohttp",
-        "tenacity",
-    ],
+    install_requires=["aiohttp", "tenacity"],
     setup_requires=["setuptools_scm"],
-    use_scm_version={
-        "local_scheme": "dirty-tag"
-    },
+    use_scm_version={"local_scheme": "dirty-tag"},
 )

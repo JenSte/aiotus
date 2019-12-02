@@ -9,12 +9,12 @@ black-check:
 	@black \
 	    --check \
 	    --diff \
-	    aiotus scripts/aiotus-client tests
+	    aiotus scripts/aiotus-client tests setup.py
 
 flake8-check:
 	@echo Running flake8...
 	@flake8 \
-	    aiotus scripts/* tests
+	    aiotus scripts/* tests setup.py
 
 isort-check:
 	@echo Running isort...
@@ -22,7 +22,7 @@ isort-check:
 	    --check-only \
 	    --diff \
 	    --recursive \
-	    aiotus scripts/* tests
+	    aiotus scripts/* tests setup.py
 
 mypy-check:
 	@echo Running mypy...

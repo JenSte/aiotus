@@ -5,13 +5,13 @@ import asyncio
 import logging
 import mimetypes
 import os.path
-from typing import Dict, Optional
+from typing import Optional
 
 import aiotus
 
 
 async def aiotus_client_coro(
-    args: argparse.Namespace, metadata: Dict[str, str]
+    args: argparse.Namespace, metadata: aiotus.Metadata
 ) -> Optional[str]:
     with open(args.file, "rb") as file:
         location = await aiotus.upload(args.endpoint, file, metadata)
@@ -31,11 +31,11 @@ def aiotus_client() -> int:
     parser.add_argument("file", type=str, help="file to upload")
     args = parser.parse_args()
 
-    metadata = {"filename": os.path.basename(args.file)}
+    metadata = {"filename": os.path.basename(args.file).encode()}
 
     mime_type, _ = mimetypes.guess_type(args.file)
     if mime_type:
-        metadata["mime_type"] = mime_type
+        metadata["mime_type"] = mime_type.encode()
 
     logging.basicConfig(level=logging.INFO)
 

@@ -1,4 +1,3 @@
-import base64
 import dataclasses
 import io
 import os.path
@@ -26,7 +25,7 @@ async def tus_server(aiohttp_server):
         # The uploaded data will be accumulated here.
         "data": None,
         # Metadata included in the creation will be placed here.
-        "metadata": {},
+        "metadata": None,
         # HTTP headers of the creation.
         "headers": None,
     }
@@ -37,10 +36,7 @@ async def tus_server(aiohttp_server):
             raise aiohttp.web.HTTPInternalServerError()
 
         if "Upload-Metadata" in request.headers:
-            pairs = request.headers["Upload-Metadata"].split(", ")
-            pairs = [p.split(" ", 1) for p in pairs]
-            for k, v in pairs:
-                state["metadata"][k] = base64.b64decode(v, validate=True).decode()
+            state["metadata"] = request.headers["Upload-Metadata"]
 
         state["headers"] = request.headers
 
@@ -50,7 +46,7 @@ async def tus_server(aiohttp_server):
         headers = {"Location": str(state["upload_endpoint"])}
         raise aiohttp.web.HTTPCreated(headers=headers)
 
-    async def handler_offset(request):
+    async def handler_head(request):
         state["retries_offset"] -= 1
         if state["retries_offset"] > 0:
             raise aiohttp.web.HTTPInternalServerError()
@@ -59,6 +55,8 @@ async def tus_server(aiohttp_server):
             raise aiohttp.web.HTTPNotFound()
 
         headers = {"Upload-Offset": str(len(state["data"]))}
+        if state["metadata"] is not None:
+            headers["Upload-Metadata"] = state["metadata"]
         raise aiohttp.web.HTTPOk(headers=headers)
 
     async def handler_upload(request):
@@ -77,7 +75,7 @@ async def tus_server(aiohttp_server):
 
     app = aiohttp.web.Application()
     app.router.add_route("POST", "/files", handler_create)
-    app.router.add_route("HEAD", "/files/" + upload_name, handler_offset)
+    app.router.add_route("HEAD", "/files/" + upload_name, handler_head)
     app.router.add_route("PATCH", "/files/" + upload_name, handler_upload)
 
     state["server"] = await aiohttp_server(app)

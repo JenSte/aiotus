@@ -1,6 +1,6 @@
 import base64
 import io
-from typing import BinaryIO, Dict
+from typing import BinaryIO, Optional
 
 import aiohttp
 import yarl
@@ -13,7 +13,7 @@ async def create(
     session: aiohttp.ClientSession,
     url: yarl.URL,
     file: BinaryIO,
-    metadata: Dict[str, str],
+    metadata: common.Metadata,
     ssl: common.SSLArgument = None,
 ) -> yarl.URL:
     """Create an upload.
@@ -45,12 +45,15 @@ async def create(
             if "," in k:
                 raise ValueError("Metadata keys must not contain commas.")
 
-        def encode_value(value: str) -> str:
-            encoded_bytes = base64.b64encode(value.encode())
-            encoded_string = encoded_bytes.decode()
-            return encoded_string
+        def encode_value(value: Optional[bytes]) -> str:
+            if value is None:
+                return ""
 
-        pairs = [f"{k} {encode_value(v)}" for k, v in metadata.items()]
+            encoded_bytes = base64.b64encode(value)
+            encoded_string = encoded_bytes.decode()
+            return " " + encoded_string
+
+        pairs = [f"{k}{encode_value(v)}" for k, v in metadata.items()]
         headers["Upload-Metadata"] = ", ".join(pairs)
 
     logger.debug(f"Creating upload...")

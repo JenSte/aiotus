@@ -11,19 +11,19 @@ class TestCreate:
         """Check the different checks performed on metadata keys."""
 
         with pytest.raises(ValueError) as excinfo:
-            metadata = {"k1": "v1", "k²": "v2", "k3": "v3"}
+            metadata = {"k1": "v1".encode(), "k²": "v2".encode(), "k3": "v3".encode()}
             await aiotus.creation.create(None, None, memory_file, metadata)
 
         assert "ASCII characters" in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            metadata = {"k1": "v1", "k 2": "v2", "k3": "v3"}
+            metadata = {"k1": "v1".encode(), "k 2": "v2".encode(), "k3": "v3".encode()}
             await aiotus.creation.create(None, None, memory_file, metadata)
 
         assert "spaces" in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            metadata = {"k1": "v1", "k2,": "v2", "k3": "v3"}
+            metadata = {"k1": "v1".encode(), "k2,": "v2".encode(), "k3": "v3".encode()}
             await aiotus.creation.create(None, None, memory_file, metadata)
 
         assert "commas" in str(excinfo.value)
@@ -67,7 +67,7 @@ class TestCreate:
     async def test_create_functional(self, tus_server, memory_file):
         """Test the normal functionality of the upload creation."""
 
-        metadata = {"k1": "1", "k2": "2²", "k-3": "three"}
+        metadata = {"k1": "1".encode(), "k2": "2²".encode(), "k-3": "three".encode()}
 
         endpoint = tus_server["server"].make_url("/files")
 

@@ -19,8 +19,8 @@ import aiotus
 creation_url = "http://example.com/files"
 
 metadata = {
-    "Filename": "image.jpeg",
-    "Content-Type": "image/jpeg"
+    "Filename": "image.jpeg".encode(),
+    "Content-Type": "image/jpeg".encode()
 }
 
 with open("image.jpeg", "rb") as f:

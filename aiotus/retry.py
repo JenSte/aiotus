@@ -1,6 +1,6 @@
 import asyncio
 import dataclasses
-from typing import BinaryIO, Callable, Dict, Optional
+from typing import BinaryIO, Callable, Optional
 
 import aiohttp
 import tenacity  # type: ignore
@@ -59,7 +59,7 @@ def _make_log_before_sleep_function(s: str) -> Callable[[str], None]:
 async def upload(
     endpoint: str,
     file: BinaryIO,
-    metadata: Optional[Dict[str, str]] = None,
+    metadata: Optional[common.Metadata] = None,
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
 ) -> Optional[yarl.URL]:

@@ -10,14 +10,14 @@ class TestUploadFile:
     async def test_upload_functional(self, tus_server, memory_file):
         """Test the normal functionality of the 'upload()' function."""
 
-        metadata = {"Content-Type": "image/jpeg"}
+        metadata = {"Content-Type": "image/jpeg".encode(), "key": None}
 
         location = await aiotus.upload(
             tus_server["create_endpoint"], memory_file, metadata
         )
 
         assert location is not None
-        assert tus_server["metadata"] == metadata
+        assert tus_server["metadata"] == "Content-Type aW1hZ2UvanBlZw==, key"
         assert tus_server["data"] is not None
         assert tus_server["data"] == memory_file.getbuffer()
 
@@ -40,7 +40,7 @@ class TestUploadFile:
     async def test_upload_wrong_metadata(self, tus_server, memory_file):
         """Test if wrong metadata is rejected."""
 
-        metadata = {"²": "2"}
+        metadata = {"²": "2".encode()}
 
         location = await aiotus.upload(
             tus_server["create_endpoint"], memory_file, metadata

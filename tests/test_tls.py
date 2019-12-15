@@ -28,7 +28,7 @@ class TestTLS:
             excinfo.value
         )
 
-        config = aiotus.UploadConfiguration(max_retry_period_seconds=0.001)
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
         location = await aiotus.upload(nginx_proxy.url, memory_file, config=config)
         assert location is None
 
@@ -40,7 +40,7 @@ class TestTLS:
                 session, nginx_proxy.url, memory_file, {}, ssl=False
             )
 
-        config = aiotus.UploadConfiguration(max_retry_period_seconds=0.001, ssl=False)
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001, ssl=False)
         location = await aiotus.upload(nginx_proxy.url, memory_file, config=config)
         assert location is not None
 
@@ -53,6 +53,6 @@ class TestTLS:
                 session, nginx_proxy.url, memory_file, {}, ssl=ssl_ctx
             )
 
-        config = aiotus.UploadConfiguration(max_retry_period_seconds=0.001, ssl=ssl_ctx)
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001, ssl=ssl_ctx)
         location = await aiotus.upload(nginx_proxy.url, memory_file, config=config)
         assert location is not None

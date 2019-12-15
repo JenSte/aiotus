@@ -55,7 +55,7 @@ class TestUploadFile:
         tus_server["retries_offset"] = 3
         tus_server["retries_upload"] = 3
 
-        config = aiotus.UploadConfiguration(max_retry_period_seconds=0.001)
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
 
         location = await aiotus.upload(
             tus_server["create_endpoint"], memory_file, config=config
@@ -70,7 +70,7 @@ class TestUploadFile:
 
         tus_server["retries_create"] = 11
 
-        config = aiotus.UploadConfiguration(max_retry_period_seconds=0.001)
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
 
         location = await aiotus.upload(
             tus_server["create_endpoint"], memory_file, config=config
@@ -84,7 +84,7 @@ class TestUploadFile:
 
         tus_server["retries_upload"] = 11
 
-        config = aiotus.UploadConfiguration(max_retry_period_seconds=0.001)
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
 
         location = await aiotus.upload(
             tus_server["create_endpoint"], memory_file, config=config

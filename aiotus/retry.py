@@ -11,8 +11,8 @@ from .log import logger
 
 
 @dataclasses.dataclass
-class UploadConfiguration:
-    """Class to hold the configuration for the 'upload()' function."""
+class RetryConfiguration:
+    """Class to hold settings for the functions of this module."""
 
     # Number of retry attempts to do when the communication fails.
     retry_attempts: int = 10
@@ -61,7 +61,7 @@ async def upload(
     file: BinaryIO,
     metadata: Optional[Dict[str, str]] = None,
     client_session: Optional[aiohttp.ClientSession] = None,
-    config: UploadConfiguration = UploadConfiguration(),
+    config: RetryConfiguration = RetryConfiguration(),
 ) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 

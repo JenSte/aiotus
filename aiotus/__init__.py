@@ -1,4 +1,4 @@
 from .common import ProtocolError
-from .upload import UploadConfiguration, upload
+from .retry import RetryConfiguration, upload
 
-__all__ = ("ProtocolError", "UploadConfiguration", "upload")
+__all__ = ("ProtocolError", "RetryConfiguration", "upload")

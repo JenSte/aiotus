@@ -1,5 +1,6 @@
 """Test the implementation of the core protocol."""
 
+import binascii
 import io
 
 import aiohttp
@@ -129,3 +130,76 @@ class TestUploadRemaining:
             await aiotus.core.upload_remaining(session, location, io.BytesIO(data), 0)
             await aiotus.core.upload_remaining(session, location, io.BytesIO(data), 1)
             await aiotus.core.upload_remaining(session, location, io.BytesIO(data), 3)
+
+
+class TestMetadata:
+    def test_parse_metadata(self):
+        """Check if metadata is parsed correctly."""
+
+        md = aiotus.core.parse_metadata("")
+        assert md == {}
+
+        md = aiotus.core.parse_metadata("key")
+        assert md == {"key": None}
+
+        md = aiotus.core.parse_metadata("key ")
+        assert md == {"key": None}
+
+        md = aiotus.core.parse_metadata("key dmFsdWU=")
+        assert md == {"key": b"value"}
+
+        md = aiotus.core.parse_metadata("k1, k2 dmFsdWU=")
+        assert md == {"k1": None, "k2": b"value"}
+
+        md = aiotus.core.parse_metadata("k1 djE=, k2 djI=  ")
+        assert md == {"k1": b"v1", "k2": b"v2"}
+
+        with pytest.raises(binascii.Error) as excinfo:
+            md = aiotus.core.parse_metadata("k1 djE")
+        assert "padding" in str(excinfo.value)
+
+        with pytest.raises(binascii.Error) as excinfo:
+            md = aiotus.core.parse_metadata("k1 dj&=")
+        assert "Non-base64" in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            md = aiotus.core.parse_metadata("k v v")
+        assert "more than two elements" in str(excinfo.value)
+
+    async def test_metadata(self, aiohttp_server):
+        """Check the 'core.metadata()' function."""
+
+        async def handler_no_metadata(request):
+            headers = {"Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION}
+            raise aiohttp.web.HTTPOk(headers=headers)
+
+        async def handler_invalid(request):
+            headers = {
+                "Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION,
+                "Upload-Metadata": "k1 djE",
+            }
+            raise aiohttp.web.HTTPOk(headers=headers)
+
+        async def handler_valid(request):
+            headers = {
+                "Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION,
+                "Upload-Metadata": "k1, k2 dmFsdWU=",
+            }
+            raise aiohttp.web.HTTPOk(headers=headers)
+
+        app = aiohttp.web.Application()
+        app.router.add_route("HEAD", "/no_metadata", handler_no_metadata)
+        app.router.add_route("HEAD", "/invalid", handler_invalid)
+        app.router.add_route("HEAD", "/valid", handler_valid)
+        server = await aiohttp_server(app)
+
+        async with aiohttp.ClientSession() as session:
+            md = await aiotus.core.metadata(session, server.make_url("/no_metadata"))
+            assert md == {}
+
+            with pytest.raises(aiotus.ProtocolError) as excinfo:
+                md = await aiotus.core.metadata(session, server.make_url("/invalid"))
+                assert "Unable to parse metadata" in str(excinfo.value)
+
+            md = await aiotus.core.metadata(session, server.make_url("/valid"))
+            assert md == {"k1": None, "k2": b"value"}

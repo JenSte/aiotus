@@ -1,3 +1,4 @@
+import base64
 import io
 import os
 from typing import BinaryIO
@@ -44,6 +45,52 @@ async def offset(
                 f'Unable to convert "Upload-Offset" header '
                 f'"{offset_header}" to a positive integer.'
             )
+
+
+def parse_metadata(header: str) -> common.Metadata:
+    """Split and decode the input into a metadata dictionary."""
+
+    header = header.strip()
+    if not header:
+        return {}
+
+    md: common.Metadata = {}
+    for pair in header.split(","):
+        kv = pair.split()
+        if len(kv) == 1:
+            md[kv[0]] = None
+        elif len(kv) == 2:
+            md[kv[0]] = base64.b64decode(kv[1], validate=True)
+        else:
+            raise ValueError("Key/Value pair consists of more than two elements.")
+
+    return md
+
+
+async def metadata(
+    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None
+) -> common.Metadata:
+    """Get the metadata associated with an upload.
+
+    :param session: HTTP session to use for connections.
+    :param location: The upload endpoint to query.
+    :param ssl: SSL validation mode, passed on to aiohttp.
+    :return: The metadata of the upload.
+    """
+
+    headers = {"Tus-Resumable": common.TUS_PROTOCOL_VERSION}
+
+    logger.debug(f'Getting metadata of "{location}"...')
+    async with await session.head(location, headers=headers, ssl=ssl) as response:
+        response.raise_for_status()
+
+        if "Upload-Metadata" not in response.headers:
+            return {}
+
+        try:
+            return parse_metadata(response.headers["Upload-Metadata"])
+        except Exception as e:
+            raise common.ProtocolError(f"Unable to parse metadata: {e}")
 
 
 async def upload_remaining(

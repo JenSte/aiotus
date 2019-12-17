@@ -31,6 +31,8 @@ class TestUploadFile:
                 tus_server["create_endpoint"], memory_file, client_session=s
             )
 
+            assert not s.closed
+
         assert tus_server["data"] is not None
         assert tus_server["data"] == memory_file.getbuffer()
         assert tus_server["headers"] is not None

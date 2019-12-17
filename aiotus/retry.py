@@ -1,6 +1,14 @@
 import asyncio
+import contextlib
 import dataclasses
-from typing import BinaryIO, Callable, Optional
+from typing import (
+    AsyncContextManager,
+    AsyncIterator,
+    BinaryIO,
+    Callable,
+    Optional,
+    Union,
+)
 
 import aiohttp
 import tenacity  # type: ignore
@@ -8,6 +16,18 @@ import yarl
 
 from . import common, core, creation
 from .log import logger
+
+
+@contextlib.asynccontextmanager
+async def asyncnullcontext(
+    enter_result: aiohttp.ClientSession,
+) -> AsyncIterator[aiohttp.ClientSession]:
+    """Asynchronous version of 'contextlib.nullcontext()'.
+
+    (Typed to 'aiohttp.ClientSession', as I could not get 'AsyncIterator[]' work with
+    generic 'TypeVar's.)
+    """
+    yield enter_result
 
 
 @dataclasses.dataclass
@@ -96,19 +116,22 @@ async def upload(
     )
 
     try:
+        ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]
         if client_session is None:
-            client_session = aiohttp.ClientSession()
+            ctx = aiohttp.ClientSession()
+        else:
+            ctx = asyncnullcontext(client_session)
 
-        async with client_session:
+        async with ctx as session:
             location: yarl.URL
             location = await retrying_create.call(
-                creation.create, client_session, url, file, metadata, ssl=config.ssl
+                creation.create, session, url, file, metadata, ssl=config.ssl
             )
             if not location.is_absolute():
                 location = url / location.path
 
             await retrying_upload_file.call(
-                core.upload_buffer, client_session, location, file, ssl=config.ssl
+                core.upload_buffer, session, location, file, ssl=config.ssl
             )
 
             return location

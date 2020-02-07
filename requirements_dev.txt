@@ -1,18 +1,18 @@
-aiohttp
-tenacity
+aiohttp==3.6.2
+tenacity==6.0.0
 
-black
-coverage
-codecov
-flake8
-grip
-isort
-mypy
-pytest
-pytest-aiohttp
-pytest-cov
-pytest-xprocess
+black==19.10b0
+coverage==5.0.3
+codecov==2.0.15
+flake8==3.7.9
+grip==4.5.2
+isort==4.3.21
+mypy==0.761
+pytest==5.3.5
+pytest-aiohttp==0.3.0
+pytest-cov==2.8.1
+pytest-xprocess==0.13.1
 
 setuptools
-twine
+twine==3.1.1
 wheel

@@ -1,2 +1,2 @@
-aiohttp
-tenacity
+aiohttp==3.6.2
+tenacity==6.0.0

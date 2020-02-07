@@ -90,7 +90,8 @@ async def upload(
     :param endpoint: The creation endpoint of the server.
     :param file: The file to upload.
     :param metadata: Additional metadata for the upload.
-    :param config: Settings to customize the upload.
+    :param client_session: An aiohttp ClientSession to use.
+    :param config: Settings to customize the retry behaviour.
     :return: The location where the file was uploaded to (if the upload succeeded).
     """
 

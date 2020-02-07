@@ -17,7 +17,7 @@ async def tus_server(aiohttp_server):
     state = {
         # Number of times the respective handlers will fail.
         "retries_create": 0,
-        "retries_offset": 0,
+        "retries_head": 0,
         "retries_upload": 0,
         # URLs to create and upload. (Filled out later.)
         "create_endpoint": None,
@@ -47,8 +47,8 @@ async def tus_server(aiohttp_server):
         raise aiohttp.web.HTTPCreated(headers=headers)
 
     async def handler_head(request):
-        state["retries_offset"] -= 1
-        if state["retries_offset"] > 0:
+        state["retries_head"] -= 1
+        if state["retries_head"] > 0:
             raise aiohttp.web.HTTPInternalServerError()
 
         if state["data"] is None:

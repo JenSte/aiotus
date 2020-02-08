@@ -23,10 +23,13 @@ metadata = {
     "Content-Type": "image/jpeg".encode()
 }
 
+# Upload a file to a tus server.
 with open("image.jpeg", "rb") as f:
     location = await aiotus.upload(creation_url, f, metadata)
+    # 'location' is the URL where the file was uploaded to.
 
-# 'location' contains the URL where the file was uploaded to.
+# Read back the metadata from the server.
+metadata = aiotus.metadata(location)
 ```
 
 ## Requirements
@@ -46,7 +49,7 @@ pip install aiotus
 Development versions can be installed from [TestPyPi](https://test.pypi.org/project/aiotus):
 
 ```
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple aiotus
+pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple aiotus
 ```
 
 ## License

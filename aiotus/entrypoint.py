@@ -10,26 +10,33 @@ from typing import Optional
 import aiotus
 
 
-async def aiotus_client_coro(
+async def aiotus_upload_coro(
     args: argparse.Namespace, metadata: aiotus.Metadata
 ) -> Optional[str]:
     with open(args.file, "rb") as file:
         location = await aiotus.upload(args.endpoint, file, metadata)
 
     if location:
-        logging.info(f'File uploaded to "{location}".')
+        print(str(location))
         return str(location)
 
     return None
 
 
-def aiotus_client() -> int:
+def aiotus_upload() -> int:
     parser = argparse.ArgumentParser(
-        description="tus (tus.io) client from the aiotus python package."
+        description="Tool to upload a file to a tus (tus.io) server.",
+        epilog="This program is part of the aiotus python package.",
     )
+    parser.add_argument("--debug", action="store_true", help="log debug messages")
     parser.add_argument("endpoint", type=str, help="creation URL of the tus server")
     parser.add_argument("file", type=str, help="file to upload")
     args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     metadata = {"filename": os.path.basename(args.file).encode()}
 
@@ -37,14 +44,46 @@ def aiotus_client() -> int:
     if mime_type:
         metadata["mime_type"] = mime_type.encode()
 
-    logging.basicConfig(level=logging.INFO)
-
     try:
-        location = asyncio.run(aiotus_client_coro(args, metadata))
+        location = asyncio.run(aiotus_upload_coro(args, metadata))
+        return 1 if (location is None) else 0
     except KeyboardInterrupt:
         pass
     except Exception as e:
         logging.error(f"Unable to upload file: {e}")
-        return 1
 
-    return 1 if (location is None) else 0
+    return 1
+
+
+def aiotus_metadata() -> int:
+    parser = argparse.ArgumentParser(
+        description="Tool to query the metadata of a file on a tus (tus.io) server.",
+        epilog="This program is part of the aiotus python package.",
+    )
+    parser.add_argument("--debug", action="store_true", help="log debug messages")
+    parser.add_argument("location", type=str, help="file location on the tus server")
+    args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
+
+    try:
+        metadata = asyncio.run(aiotus.metadata(args.location))
+
+        if metadata:
+            for k, v in metadata.items():
+                if v is None:
+                    print(f"{k}")
+                else:
+                    value = repr(v)[2:][:-1]
+                    print(f"{k}: {value}")
+
+        return 0
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        logging.error(f"Unable to fetch metadata: {e}")
+
+    return 1

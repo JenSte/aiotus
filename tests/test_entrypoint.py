@@ -1,18 +1,36 @@
 """Test the entrypoint module."""
 
+import io
+import os.path
+import sys
 import unittest.mock
 
 import aiotus.entrypoint
 
 
-class TestAiotusClient:
-    def test_aiotus_client(self, tusd):
+class TestAiotusClients:
+    def test_aiotus_clients(self, tusd):
         with unittest.mock.patch(
-            "sys.argv", ["aiotus-client", str(tusd.url) + "x", __file__]
+            "sys.argv", ["aiotus-upload", str(tusd.url) + "x", __file__]
         ):
-            assert 1 == aiotus.entrypoint.aiotus_client()
+            assert 1 == aiotus.entrypoint.aiotus_upload()
 
         with unittest.mock.patch(
-            "sys.argv", ["aiotus-client", str(tusd.url), __file__]
+            "sys.argv", ["aiotus-upload", str(tusd.url), __file__]
         ):
-            assert 0 == aiotus.entrypoint.aiotus_client()
+            with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
+                assert 0 == aiotus.entrypoint.aiotus_upload()
+                url = sys.stdout.getvalue().strip()
+
+        with unittest.mock.patch("sys.argv", ["aiotus-metadata", url]):
+            with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
+                assert 0 == aiotus.entrypoint.aiotus_metadata()
+
+                lines = sys.stdout.getvalue().splitlines(False)
+                lines.sort()
+
+                expected_output = [
+                    f"filename: {os.path.basename(__file__)}",
+                    "mime_type: text/x-python",
+                ]
+                assert lines == expected_output

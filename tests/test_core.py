@@ -1,7 +1,6 @@
 """Test the implementation of the core protocol."""
 
 import binascii
-import io
 
 import aiohttp
 import pytest  # type: ignore
@@ -90,46 +89,6 @@ class TestOffset:
             offset = await aiotus.core.offset(session, location)
 
         assert offset == 123
-
-
-class TestUploadRemaining:
-    async def test_upload_remaining_functional(self, aiohttp_server, memory_file):
-        """Test the normal functionality of the 'upload_remaining' function."""
-
-        data = memory_file.getbuffer()
-
-        async def handler(request):
-            assert "Tus-Resumable" in request.headers
-            assert "Upload-Offset" in request.headers
-            assert "Content-Length" in request.headers
-            assert "Content-Type" in request.headers
-
-            assert (
-                request.headers["Tus-Resumable"] == aiotus.common.TUS_PROTOCOL_VERSION
-            )
-            assert request.headers["Content-Type"] == "application/offset+octet-stream"
-
-            offset = int(request.headers["Upload-Offset"])
-            length = int(request.headers["Content-Length"])
-
-            body = await request.read()
-
-            assert offset + length <= len(data)
-            assert length == len(body)
-            assert body == data[offset : offset + length]
-
-            raise aiohttp.web.HTTPNoContent()
-
-        app = aiohttp.web.Application()
-        app.router.add_route("PATCH", "/files/12345678", handler)
-        server = await aiohttp_server(app)
-
-        location = server.make_url("/files/12345678")
-
-        async with aiohttp.ClientSession() as session:
-            await aiotus.core.upload_remaining(session, location, io.BytesIO(data), 0)
-            await aiotus.core.upload_remaining(session, location, io.BytesIO(data), 1)
-            await aiotus.core.upload_remaining(session, location, io.BytesIO(data), 3)
 
 
 class TestMetadata:

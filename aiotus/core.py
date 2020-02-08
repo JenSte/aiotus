@@ -1,6 +1,6 @@
+import asyncio
 import base64
 import io
-import os
 from typing import BinaryIO
 
 import aiohttp
@@ -93,67 +93,46 @@ async def metadata(
             raise common.ProtocolError(f"Unable to parse metadata: {e}")
 
 
-async def upload_remaining(
-    session: aiohttp.ClientSession,
-    location: yarl.URL,
-    file: BinaryIO,
-    current_offset: int,
-    ssl: common.SSLArgument = None,
-) -> None:
-    """Upload remaining data to the server.
-
-    :param session: HTTP session to use for connections.
-    :param location: The endpoint to upload to.
-    :param file: The file object to upload.
-    :param current_offset: The number of bytes already uploaded.
-    :param ssl: SSL validation mode, passed on to aiohttp.
-    """
-
-    total_size = file.seek(0, io.SEEK_END)
-    outstanding = total_size - current_offset
-
-    file.seek(current_offset, io.SEEK_SET)
-
-    headers = {
-        "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
-        "Upload-Offset": str(current_offset),
-        "Content-Length": str(outstanding),
-        "Content-Type": "application/offset+octet-stream",
-    }
-
-    logger.debug(f'Uploading {outstanding} bytes to "{location}"...')
-    async with await session.patch(
-        location, headers=headers, data=file, ssl=ssl
-    ) as response:
-        response.raise_for_status()
-
-
 async def upload_buffer(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    file: BinaryIO,
+    buffer: BinaryIO,
     ssl: common.SSLArgument = None,
+    chunksize: int = 4 * 1024 * 1024,
 ) -> None:
     """Upload data to the server.
 
     :param session: HTTP session to use for connections.
     :param location: The endpoint to upload to.
-    :param file: The file object to upload.
+    :param buffer: The data to upload.
     :param ssl: SSL validation mode, passed on to aiohttp.
+    :param chunksize: The size of individual chunks to upload at a time.
     """
 
+    loop = asyncio.get_event_loop()
+
     current_offset = await offset(session, location, ssl=ssl)
+    await loop.run_in_executor(None, buffer.seek, current_offset, io.SEEK_SET)
 
     logger.debug(f'Resuming upload of "{location}" at offset {current_offset}..."')
 
-    # We reopen the file, as the streaming upload in 'upload_remaining()'
-    # closes the file, and we may have to reuse the origin file if we resume
-    # the upload later.
+    while True:
+        chunk = await loop.run_in_executor(None, buffer.read, chunksize)
+        if not chunk:
+            logger.debug("EOF reached")
+            break
 
-    if hasattr(file, "getbuffer"):
-        file = io.BytesIO(file.getbuffer())  # type: ignore
-        await upload_remaining(session, location, file, current_offset, ssl=ssl)
-    else:
-        fd = os.dup(file.fileno())
-        with os.fdopen(fd, "rb") as file:
-            await upload_remaining(session, location, file, current_offset, ssl=ssl)
+        headers = {
+            "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
+            "Upload-Offset": str(current_offset),
+            "Content-Length": str(len(chunk)),
+            "Content-Type": "application/offset+octet-stream",
+        }
+
+        logger.debug(f'Uploading {len(chunk)} bytes to "{location}"...')
+        async with await session.patch(
+            location, headers=headers, data=chunk, ssl=ssl
+        ) as response:
+            response.raise_for_status()
+
+        current_offset += len(chunk)

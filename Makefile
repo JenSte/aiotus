@@ -2,19 +2,19 @@ all: black-check flake8-check isort-check mypy-check test
 
 black:
 	@echo Formatting code using black...
-	@black aiotus scripts/aiotus-client tests
+	@black aiotus tests
 
 black-check:
 	@echo Running black...
 	@black \
 	    --check \
 	    --diff \
-	    aiotus scripts/aiotus-client tests setup.py
+	    aiotus tests setup.py
 
 flake8-check:
 	@echo Running flake8...
 	@flake8 \
-	    aiotus scripts/* tests setup.py
+	    aiotus tests setup.py
 
 isort-check:
 	@echo Running isort...
@@ -22,13 +22,13 @@ isort-check:
 	    --check-only \
 	    --diff \
 	    --recursive \
-	    aiotus scripts/* tests setup.py
+	    aiotus tests setup.py
 
 mypy-check:
 	@echo Running mypy...
 	@mypy \
 	    --strict \
-	    aiotus scripts/*
+	    aiotus
 	@mypy \
 	    tests
 

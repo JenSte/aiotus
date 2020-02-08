@@ -21,16 +21,16 @@ jobs:
         pip install -r requirements_dev.txt
     - name: Run black
       run: |
-        black --check aiotus scripts/* tests
+        black --check aiotus tests
     - name: Run flake8
       run: |
-        flake8 aiotus scripts/* tests
+        flake8 aiotus tests
     - name: Run isort
       run: |
-        isort --recursive aiotus scripts/* tests
+        isort --recursive aiotus tests
     - name: Run mypy
       run: |
-        mypy --strict aiotus scripts/*
+        mypy --strict aiotus
         mypy tests
     - name: Download tusd
       run: |

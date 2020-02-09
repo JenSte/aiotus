@@ -2,6 +2,7 @@
 
 [![Actions Status](https://github.com/JenSte/aiotus/workflows/Continuous%20Integration/badge.svg?branch=master)](https://github.com/JenSte/aiotus/actions)
 [![codecov](https://codecov.io/gh/JenSte/aiotus/branch/master/graph/badge.svg)](https://codecov.io/gh/JenSte/aiotus)
+[![Documentation Status](https://readthedocs.org/projects/aiotus/badge/?version=latest)](https://aiotus.readthedocs.io/en/latest/)
 
 ``aiotus`` implements the client side of the [tus](https://tus.io) protocol.
 

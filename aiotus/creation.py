@@ -4,6 +4,7 @@ Implementation of the
 to the tus protocol.
 """
 
+import asyncio
 import base64
 import io
 from typing import BinaryIO, Optional
@@ -32,7 +33,8 @@ async def create(
     :return: The URL to upload the data to.
     """
 
-    total_size = file.seek(0, io.SEEK_END)
+    loop = asyncio.get_event_loop()
+    total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
 
     headers = {
         "Tus-Resumable": common.TUS_PROTOCOL_VERSION,

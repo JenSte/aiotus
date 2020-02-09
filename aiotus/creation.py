@@ -1,3 +1,9 @@
+"""
+Implementation of the
+`creation extension <https://tus.io/protocols/resumable-upload.html#creation>`_
+to the tus protocol.
+"""
+
 import base64
 import io
 from typing import BinaryIO, Optional
@@ -19,7 +25,7 @@ async def create(
     """Create an upload.
 
     :param session: HTTP session to use for connections.
-    :param location: The creation endpoint of the server.
+    :param url: The creation endpoint of the server.
     :param file: The file object to upload.
     :param metadata: Additional metadata for the upload.
     :param ssl: SSL validation mode, passed on to aiohttp.

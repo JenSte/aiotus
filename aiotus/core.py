@@ -1,3 +1,8 @@
+"""
+Implementation of the
+`core tus protocol <https://tus.io/protocols/resumable-upload.html#core-protocol>`_.
+"""
+
 import asyncio
 import base64
 import io
@@ -47,7 +52,7 @@ async def offset(
             )
 
 
-def parse_metadata(header: str) -> common.Metadata:
+def _parse_metadata(header: str) -> common.Metadata:
     """Split and decode the input into a metadata dictionary."""
 
     header = header.strip()
@@ -88,7 +93,7 @@ async def metadata(
             return {}
 
         try:
-            return parse_metadata(response.headers["Upload-Metadata"])
+            return _parse_metadata(response.headers["Upload-Metadata"])
         except Exception as e:
             raise common.ProtocolError(f"Unable to parse metadata: {e}")
 

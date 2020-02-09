@@ -34,20 +34,21 @@ async def asyncnullcontext(
 class RetryConfiguration:
     """Class to hold settings for the functions of this module."""
 
-    # Number of retry attempts to do when the communication fails.
+    #: Number of retry attempts to do when the communication fails.
     retry_attempts: int = 10
 
-    # Maximum time between retries, in seconds.
-    #
-    # Exponential backoff is used in case of communication errors,
-    # but the time between retries is caped by this value.
+    #: Maximum time between retries, in seconds.
+    #:
+    #: Exponential backoff is used in case of communication errors,
+    #: but the time between retries is caped by this value.
     max_retry_period_seconds: float = 60.0
 
-    # 'ssl' argument passed on to the aiohttp calls.
-    #
-    # This can be None, False, or an instance of ssl.SSLContext, see
-    # https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets
-    # for the different meanings.
+    #: 'ssl' argument passed on to the aiohttp calls.
+    #:
+    #: This can be None, False, or an instance of ssl.SSLContext, see
+    #: the `aiohttp documentation
+    #: <https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets>`_  # noqa: E501
+    #: for the different meanings.
     ssl: common.SSLArgument = None
 
 
@@ -77,7 +78,7 @@ def _make_log_before_sleep_function(s: str) -> Callable[[str], None]:
 
 
 async def upload(
-    endpoint: str,
+    endpoint: Union[str, yarl.URL],
     file: BinaryIO,
     metadata: Optional[common.Metadata] = None,
     client_session: Optional[aiohttp.ClientSession] = None,

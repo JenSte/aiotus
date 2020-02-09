@@ -45,6 +45,9 @@ jobs:
       uses: codecov/codecov-action@v1.0.4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+    - name: Generate documentation
+      run: |
+        make -C docs html
   package:
     needs: checks
     runs-on: ubuntu-latest

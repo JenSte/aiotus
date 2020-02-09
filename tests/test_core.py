@@ -95,34 +95,34 @@ class TestMetadata:
     def test_parse_metadata(self):
         """Check if metadata is parsed correctly."""
 
-        md = aiotus.core.parse_metadata("")
+        md = aiotus.core._parse_metadata("")
         assert md == {}
 
-        md = aiotus.core.parse_metadata("key")
+        md = aiotus.core._parse_metadata("key")
         assert md == {"key": None}
 
-        md = aiotus.core.parse_metadata("key ")
+        md = aiotus.core._parse_metadata("key ")
         assert md == {"key": None}
 
-        md = aiotus.core.parse_metadata("key dmFsdWU=")
+        md = aiotus.core._parse_metadata("key dmFsdWU=")
         assert md == {"key": b"value"}
 
-        md = aiotus.core.parse_metadata("k1, k2 dmFsdWU=")
+        md = aiotus.core._parse_metadata("k1, k2 dmFsdWU=")
         assert md == {"k1": None, "k2": b"value"}
 
-        md = aiotus.core.parse_metadata("k1 djE=, k2 djI=  ")
+        md = aiotus.core._parse_metadata("k1 djE=, k2 djI=  ")
         assert md == {"k1": b"v1", "k2": b"v2"}
 
         with pytest.raises(binascii.Error) as excinfo:
-            md = aiotus.core.parse_metadata("k1 djE")
+            md = aiotus.core._parse_metadata("k1 djE")
         assert "padding" in str(excinfo.value)
 
         with pytest.raises(binascii.Error) as excinfo:
-            md = aiotus.core.parse_metadata("k1 dj&=")
+            md = aiotus.core._parse_metadata("k1 dj&=")
         assert "Non-base64" in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            md = aiotus.core.parse_metadata("k v v")
+            md = aiotus.core._parse_metadata("k v v")
         assert "more than two elements" in str(excinfo.value)
 
     async def test_metadata(self, aiohttp_server):

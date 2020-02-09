@@ -38,6 +38,9 @@ test .coverage: tusd tests/nginx.key tests/selfsigned.crt
 coverage_html/index.html: .coverage
 	coverage html -d coverage_html
 
+doc:
+	make -C docs clean html
+
 venv:
 	python3 -m venv venv
 	source venv/bin/activate; \
@@ -88,6 +91,7 @@ veryclean: clean
 .PHONY: \
 	black \
 	clean \
+	doc \
 	flake8-check \
 	isort-check \
 	mypy-check \

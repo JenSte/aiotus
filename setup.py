@@ -12,6 +12,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JenSte/aiotus",
+    project_urls={"Documentation": "https://aiotus.readthedocs.io"},
     license="Apache 2",
     packages=setuptools.find_packages(),
     package_data={"aiotus": ["py.typed"]},

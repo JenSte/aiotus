@@ -34,22 +34,28 @@ async def asyncnullcontext(
 class RetryConfiguration:
     """Class to hold settings for the functions of this module."""
 
-    #: Number of retry attempts to do when the communication fails.
     retry_attempts: int = 10
+    """
+    Number of retry attempts to do when the communication fails.
+    """
 
-    #: Maximum time between retries, in seconds.
-    #:
-    #: Exponential backoff is used in case of communication errors,
-    #: but the time between retries is caped by this value.
     max_retry_period_seconds: float = 60.0
+    """
+    Maximum time between retries, in seconds.
 
-    #: 'ssl' argument passed on to the aiohttp calls.
-    #:
-    #: This can be None, False, or an instance of ssl.SSLContext, see
-    #: the `aiohttp documentation
-    #: <https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets>`_  # noqa: E501
-    #: for the different meanings.
+    Exponential backoff is used in case of communication errors,
+    but the time between retries is caped by this value.
+    """
+
     ssl: common.SSLArgument = None
+    """
+    'ssl' argument passed on to the aiohttp calls.
+
+    This can be None, False, or an instance of ssl.SSLContext, see
+    the `aiohttp documentation
+    <https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets>`_
+    for the different meanings.
+    """  # noqa: E501
 
 
 def _make_log_before_function(s: str) -> Callable[[str], None]:

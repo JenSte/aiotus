@@ -45,6 +45,8 @@ async def offset(
                 raise RuntimeError()
 
             return current_offset
+        except asyncio.CancelledError:  # pragma: no cover
+            raise
         except Exception:
             raise RuntimeError(
                 f'Unable to convert "Upload-Offset" header '
@@ -94,6 +96,8 @@ async def metadata(
 
         try:
             return _parse_metadata(response.headers["Upload-Metadata"])
+        except asyncio.CancelledError:  # pragma: no cover
+            raise
         except Exception as e:
             raise common.ProtocolError(f"Unable to parse metadata: {e}")
 

@@ -144,7 +144,6 @@ async def upload(
 
             return location
     except asyncio.CancelledError:  # pragma: no cover
-        # Up until python 3.7, CancelledError is not derived from BaseException.
         raise
     except tenacity.RetryError as e:
         logger.error(

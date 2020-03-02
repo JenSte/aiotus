@@ -6,7 +6,8 @@ Implementation of the
 import asyncio
 import base64
 import io
-from typing import BinaryIO
+from copy import copy
+from typing import BinaryIO, Optional, Dict
 
 import aiohttp
 import yarl
@@ -16,17 +17,20 @@ from .log import logger
 
 
 async def offset(
-    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None
+    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None,
+    headers: Optional[Dict[str, str]] = None
 ) -> int:
     """Get the number of uploaded bytes.
 
     :param session: HTTP session to use for connections.
     :param location: The upload endpoint to query.
     :param ssl: SSL validation mode, passed on to aiohttp.
+    :param headers: Optional headers used in the request.
     :return: The number of bytes that are already on the server.
     """
 
-    headers = {"Tus-Resumable": common.TUS_PROTOCOL_VERSION}
+    headers = headers or {}
+    headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
     logger.debug(f'Getting offset of "{location}"...')
     async with await session.head(location, headers=headers, ssl=ssl) as response:
@@ -75,17 +79,20 @@ def _parse_metadata(header: str) -> common.Metadata:
 
 
 async def metadata(
-    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None
+    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None,
+    headers: Optional[Dict[str, str]] = None
 ) -> common.Metadata:
     """Get the metadata associated with an upload.
 
     :param session: HTTP session to use for connections.
     :param location: The upload endpoint to query.
     :param ssl: SSL validation mode, passed on to aiohttp.
+    :param headers: Optional headers used in the request.
     :return: The metadata of the upload.
     """
 
-    headers = {"Tus-Resumable": common.TUS_PROTOCOL_VERSION}
+    headers = headers or {}
+    headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
     logger.debug(f'Getting metadata of "{location}"...')
     async with await session.head(location, headers=headers, ssl=ssl) as response:
@@ -108,6 +115,7 @@ async def upload_buffer(
     buffer: BinaryIO,
     ssl: common.SSLArgument = None,
     chunksize: int = 4 * 1024 * 1024,
+    headers: Optional[Dict[str, str]] = None
 ) -> None:
     """Upload data to the server.
 
@@ -116,9 +124,11 @@ async def upload_buffer(
     :param buffer: The data to upload.
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param chunksize: The size of individual chunks to upload at a time.
+    :param headers: Optional headers used in the request.
     """
 
     loop = asyncio.get_event_loop()
+    headers = headers or {}
 
     current_offset = await offset(session, location, ssl=ssl)
     await loop.run_in_executor(None, buffer.seek, current_offset, io.SEEK_SET)
@@ -131,16 +141,19 @@ async def upload_buffer(
             logger.debug("EOF reached")
             break
 
-        headers = {
+        # Use the parameter headers as base to make sure that users do not overwrite
+        # important data like 'content-type'.
+        request_headers = copy(headers)
+        request_headers.update({
             "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
             "Upload-Offset": str(current_offset),
             "Content-Length": str(len(chunk)),
             "Content-Type": "application/offset+octet-stream",
-        }
+        })
 
         logger.debug(f'Uploading {len(chunk)} bytes to "{location}"...')
         async with await session.patch(
-            location, headers=headers, data=chunk, ssl=ssl
+            location, headers=request_headers, data=chunk, ssl=ssl
         ) as response:
             response.raise_for_status()
 

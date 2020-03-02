@@ -7,7 +7,7 @@ to the tus protocol.
 import asyncio
 import base64
 import io
-from typing import BinaryIO, Optional
+from typing import BinaryIO, Dict, Optional
 
 import aiohttp
 import yarl
@@ -22,6 +22,7 @@ async def create(
     file: BinaryIO,
     metadata: common.Metadata,
     ssl: common.SSLArgument = None,
+    headers: Optional[Dict[str, str]] = None
 ) -> yarl.URL:
     """Create an upload.
 
@@ -30,16 +31,18 @@ async def create(
     :param file: The file object to upload.
     :param metadata: Additional metadata for the upload.
     :param ssl: SSL validation mode, passed on to aiohttp.
+    :param headers: Optional headers used in the request.
     :return: The URL to upload the data to.
     """
 
     loop = asyncio.get_event_loop()
     total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
+    headers = headers or {}
 
-    headers = {
+    headers.update({
         "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
         "Upload-Length": str(total_size),
-    }
+    })
 
     if metadata:
         # Check metadata keys before we proceed.

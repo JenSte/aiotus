@@ -11,7 +11,7 @@ mypy==0.770
 pytest-aiohttp==0.3.0
 pytest-cov==2.8.1
 pytest-xprocess==0.13.1
-pytest==5.3.5
+pytest==5.4.0
 sphinx-autodoc-typehints==1.10.3
 
 setuptools

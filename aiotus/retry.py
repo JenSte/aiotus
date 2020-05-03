@@ -58,7 +58,7 @@ class RetryConfiguration:
     """  # noqa: E501
 
 
-def _make_log_before_function(s: str) -> Callable[[str], None]:
+def _make_log_before_function(s: str) -> Callable[[tenacity.RetryCallState], None]:
     def log(retry_state: tenacity.RetryCallState) -> None:
 
         if retry_state.attempt_number > 1:
@@ -69,16 +69,20 @@ def _make_log_before_function(s: str) -> Callable[[str], None]:
     return log
 
 
-def _make_log_before_sleep_function(s: str) -> Callable[[str], None]:
+def _make_log_before_sleep_function(
+    s: str,
+) -> Callable[[tenacity.RetryCallState], None]:
     def log(retry_state: tenacity.RetryCallState) -> None:
-        duration = retry_state.next_action.sleep
-        if retry_state.outcome.failed:
-            value = retry_state.outcome.exception()
-        else:
-            value = retry_state.outcome.result()
-        logger.warning(
-            f"{s.capitalize()} failed, retrying in {duration:.0f} second(s): {value}"
-        )
+        if (retry_state.next_action is not None) and (retry_state.outcome is not None):
+            duration = retry_state.next_action.sleep
+            if retry_state.outcome.failed:
+                value = retry_state.outcome.exception()
+            else:
+                value = retry_state.outcome.result()
+            logger.warning(
+                f"{s.capitalize()} failed, "
+                f"retrying in {duration:.0f} second(s): {value}"
+            )
 
     return log
 

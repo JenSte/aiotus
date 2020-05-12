@@ -64,7 +64,7 @@ async def create(
         pairs = [f"{k}{encode_value(v)}" for k, v in metadata.items()]
         headers["Upload-Metadata"] = ", ".join(pairs)
 
-    logger.debug(f"Creating upload...")
+    logger.debug("Creating upload...")
     async with await session.post(url, headers=headers, ssl=ssl) as response:
         if response.status != 201:
             raise common.ProtocolError(

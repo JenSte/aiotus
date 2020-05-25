@@ -9,7 +9,7 @@ grip==4.5.2
 isort==4.3.21
 mypy==0.770
 pytest-aiohttp==0.3.0
-pytest-cov==2.8.1
+pytest-cov==2.9.0
 pytest-xprocess==0.13.1
 pytest==5.4.2
 sphinx-autodoc-typehints==1.10.3

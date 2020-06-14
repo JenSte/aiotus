@@ -8,7 +8,7 @@ from typing import (
     Callable,
     Optional,
     Union,
-)
+    Dict)
 
 import aiohttp
 import tenacity  # type: ignore
@@ -93,6 +93,7 @@ async def upload(
     metadata: Optional[common.Metadata] = None,
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
+    headers: Optional[Dict[str, str]] = None
 ) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 
@@ -103,6 +104,7 @@ async def upload(
     :param metadata: Additional metadata for the upload.
     :param client_session: An aiohttp ClientSession to use.
     :param config: Settings to customize the retry behaviour.
+    :param headers: Optional headers used in the request.
     :return: The location where the file was uploaded to (if the upload succeeded).
     """
 
@@ -137,13 +139,15 @@ async def upload(
         async with ctx as session:
             location: yarl.URL
             location = await retrying_create.call(
-                creation.create, session, url, file, metadata, ssl=config.ssl
+                creation.create, session, url, file, metadata, ssl=config.ssl,
+                headers=headers
             )
             if not location.is_absolute():
                 location = url / location.path
 
             await retrying_upload_file.call(
-                core.upload_buffer, session, location, file, ssl=config.ssl
+                core.upload_buffer, session, location, file, ssl=config.ssl,
+                headers=headers
             )
 
             return location

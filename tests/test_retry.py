@@ -11,15 +11,24 @@ class TestRetry:
         """Test the normal functionality of the 'upload()' function."""
 
         metadata = {"Content-Type": "image/jpeg".encode(), "key": None}
+        additional_headers = {"h1": "v1", "h2": "v2"}
 
         location = await aiotus.upload(
-            tus_server["create_endpoint"], memory_file, metadata
+            tus_server["create_endpoint"],
+            memory_file,
+            metadata,
+            headers=additional_headers,
         )
 
         assert location is not None
         assert tus_server["metadata"] == "Content-Type aW1hZ2UvanBlZw==, key"
         assert tus_server["data"] is not None
         assert tus_server["data"] == memory_file.getbuffer()
+        assert tus_server["post_headers"] is not None
+        assert "h1" in tus_server["post_headers"]
+        assert tus_server["post_headers"]["h1"] == "v1"
+        assert "h2" in tus_server["post_headers"]
+        assert tus_server["post_headers"]["h2"] == "v2"
 
     async def test_upload_client_session(self, tus_server, memory_file):
         """Use a custom client session."""
@@ -32,15 +41,23 @@ class TestRetry:
                 tus_server["create_endpoint"], memory_file, md1, client_session=s
             )
 
-            md2 = await aiotus.metadata(location, client_session=s)
+            additional_headers = {"h1": "v1", "h2": "v2"}
+            md2 = await aiotus.metadata(
+                location, client_session=s, headers=additional_headers
+            )
 
             assert not s.closed
 
         assert tus_server["data"] is not None
         assert tus_server["data"] == memory_file.getbuffer()
-        assert tus_server["headers"] is not None
-        assert "Authorization" in tus_server["headers"]
-        assert tus_server["headers"]["Authorization"] == headers["Authorization"]
+        assert tus_server["post_headers"] is not None
+        assert "Authorization" in tus_server["post_headers"]
+        assert tus_server["post_headers"]["Authorization"] == headers["Authorization"]
+        assert tus_server["head_headers"] is not None
+        assert "h1" in tus_server["head_headers"]
+        assert tus_server["head_headers"]["h1"] == "v1"
+        assert "h2" in tus_server["head_headers"]
+        assert tus_server["head_headers"]["h2"] == "v2"
         assert md1 == md2
 
     async def test_upload_wrong_metadata(self, tus_server, memory_file):

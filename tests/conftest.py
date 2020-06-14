@@ -26,8 +26,9 @@ async def tus_server(aiohttp_server):
         "data": None,
         # Metadata included in the creation will be placed here.
         "metadata": None,
-        # HTTP headers of the creation.
-        "headers": None,
+        # Complete HTTP headers used in the last head/post request.
+        "head_headers": None,
+        "post_headers": None,
     }
 
     async def handler_create(request):
@@ -38,7 +39,7 @@ async def tus_server(aiohttp_server):
         if "Upload-Metadata" in request.headers:
             state["metadata"] = request.headers["Upload-Metadata"]
 
-        state["headers"] = request.headers
+        state["post_headers"] = request.headers
 
         # "Create" the upload.
         state["data"] = bytearray()
@@ -50,6 +51,8 @@ async def tus_server(aiohttp_server):
         state["retries_head"] -= 1
         if state["retries_head"] > 0:
             raise aiohttp.web.HTTPInternalServerError()
+
+        state["head_headers"] = request.headers
 
         if state["data"] is None:
             raise aiohttp.web.HTTPNotFound()

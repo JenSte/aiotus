@@ -177,6 +177,7 @@ async def metadata(
     endpoint: Union[str, yarl.URL],
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
+    headers: Optional[Dict[str, str]] = None,
 ) -> Optional[common.Metadata]:
     """Retrieve the metadata of an upload.
 
@@ -185,6 +186,7 @@ async def metadata(
     :param endpoint: The location of the upload.
     :param client_session: An aiohttp ClientSession to use.
     :param config: Settings to customize the retry behaviour.
+    :param headers: Optional headers used in the request.
     :return: The metadata associated with the upload.
     """
 
@@ -211,7 +213,7 @@ async def metadata(
         async with ctx as session:
             md: common.Metadata
             md = await retrying_metadata.call(
-                core.metadata, session, url, ssl=config.ssl
+                core.metadata, session, url, ssl=config.ssl, headers=headers
             )
 
             return md

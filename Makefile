@@ -1,4 +1,11 @@
-all: black-check flake8-check isort-check mypy-check test
+all: black-check flake8-check isort-check mypy-check bandit-check test
+
+bandit-check:
+	@echo Running bandit...
+	@bandit\
+	    --silent \
+	    --recursive \
+	    aiotus
 
 black:
 	@echo Formatting code using black...

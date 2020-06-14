@@ -32,6 +32,9 @@ jobs:
       run: |
         mypy --strict aiotus
         mypy tests
+    - name: Run bandit
+      run: |
+        bandit --recursive aiotus
     - name: Download tusd
       run: |
         make tusd

@@ -60,7 +60,7 @@ def aiotus_metadata() -> int:
 
     try:
         metadata = asyncio.run(aiotus.metadata(args.location))
-        assert isinstance(metadata, dict)  # Silence mypy.
+        assert isinstance(metadata, dict)  # nosec - Silence mypy.
 
         for k, v in metadata.items():
             if v is None:

@@ -7,7 +7,7 @@ import asyncio
 import base64
 import io
 from copy import copy
-from typing import BinaryIO, Optional, Dict
+from typing import BinaryIO, Dict, Optional
 
 import aiohttp
 import yarl
@@ -17,8 +17,10 @@ from .log import logger
 
 
 async def offset(
-    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None
+    session: aiohttp.ClientSession,
+    location: yarl.URL,
+    ssl: common.SSLArgument = None,
+    headers: Optional[Dict[str, str]] = None,
 ) -> int:
     """Get the number of uploaded bytes.
 
@@ -79,8 +81,10 @@ def _parse_metadata(header: str) -> common.Metadata:
 
 
 async def metadata(
-    session: aiohttp.ClientSession, location: yarl.URL, ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None
+    session: aiohttp.ClientSession,
+    location: yarl.URL,
+    ssl: common.SSLArgument = None,
+    headers: Optional[Dict[str, str]] = None,
 ) -> common.Metadata:
     """Get the metadata associated with an upload.
 
@@ -115,7 +119,7 @@ async def upload_buffer(
     buffer: BinaryIO,
     ssl: common.SSLArgument = None,
     chunksize: int = 4 * 1024 * 1024,
-    headers: Optional[Dict[str, str]] = None
+    headers: Optional[Dict[str, str]] = None,
 ) -> None:
     """Upload data to the server.
 
@@ -142,14 +146,16 @@ async def upload_buffer(
             break
 
         # Use the parameter headers as base to make sure that users do not overwrite
-        # important data like 'content-type'.
+        # important data like 'Content-Type'.
         request_headers = copy(headers)
-        request_headers.update({
-            "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
-            "Upload-Offset": str(current_offset),
-            "Content-Length": str(len(chunk)),
-            "Content-Type": "application/offset+octet-stream",
-        })
+        request_headers.update(
+            {
+                "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
+                "Upload-Offset": str(current_offset),
+                "Content-Length": str(len(chunk)),
+                "Content-Type": "application/offset+octet-stream",
+            }
+        )
 
         logger.debug(f'Uploading {len(chunk)} bytes to "{location}"...')
         async with await session.patch(

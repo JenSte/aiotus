@@ -6,9 +6,10 @@ from typing import (
     AsyncIterator,
     BinaryIO,
     Callable,
+    Dict,
     Optional,
     Union,
-    Dict)
+)
 
 import aiohttp
 import tenacity  # type: ignore
@@ -93,7 +94,7 @@ async def upload(
     metadata: Optional[common.Metadata] = None,
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Dict[str, str]] = None
+    headers: Optional[Dict[str, str]] = None,
 ) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 
@@ -139,15 +140,24 @@ async def upload(
         async with ctx as session:
             location: yarl.URL
             location = await retrying_create.call(
-                creation.create, session, url, file, metadata, ssl=config.ssl,
-                headers=headers
+                creation.create,
+                session,
+                url,
+                file,
+                metadata,
+                ssl=config.ssl,
+                headers=headers,
             )
             if not location.is_absolute():
                 location = url / location.path
 
             await retrying_upload_file.call(
-                core.upload_buffer, session, location, file, ssl=config.ssl,
-                headers=headers
+                core.upload_buffer,
+                session,
+                location,
+                file,
+                ssl=config.ssl,
+                headers=headers,
             )
 
             return location

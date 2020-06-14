@@ -22,7 +22,7 @@ async def create(
     file: BinaryIO,
     metadata: common.Metadata,
     ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None
+    headers: Optional[Dict[str, str]] = None,
 ) -> yarl.URL:
     """Create an upload.
 
@@ -39,10 +39,12 @@ async def create(
     total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
     headers = headers or {}
 
-    headers.update({
-        "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
-        "Upload-Length": str(total_size),
-    })
+    headers.update(
+        {
+            "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
+            "Upload-Length": str(total_size),
+        }
+    )
 
     if metadata:
         # Check metadata keys before we proceed.

@@ -1,13 +1,33 @@
-# Asynchronous tus client library
+<h1 align="center">aiotus - Asynchronous tus client library</h1>
 
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Code Style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://black.readthedocs.io)
-[![Mypy Checked](https://img.shields.io/badge/mypy-checked-blue.svg)](http://mypy-lang.org)
-[![Python Versions](https://img.shields.io/pypi/pyversions/aiotus)](https://www.python.org)
-[![Actions Status](https://github.com/JenSte/aiotus/workflows/Continuous%20Integration/badge.svg?branch=master)](https://github.com/JenSte/aiotus/actions)
-[![codecov](https://codecov.io/gh/JenSte/aiotus/branch/master/graph/badge.svg)](https://codecov.io/gh/JenSte/aiotus)
-[![Documentation Status](https://readthedocs.org/projects/aiotus/badge/?version=latest)](https://aiotus.readthedocs.io/en/latest/)
-[![PyPI version](https://badge.fury.io/py/aiotus.svg)](https://pypi.org/project/aiotus)
+<div align="center">
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square">
+  </a>
+  <a href="https://www.python.org">
+    <img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/aiotus?style=flat-square">
+  </a>
+  <a href="http://mypy-lang.org">
+    <img alt="Mypy Checked" src="https://img.shields.io/badge/mypy-checked-blue.svg?style=flat-square">
+  </a>
+  <a href="https://black.readthedocs.io">
+    <img alt="Code Style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square">
+  </a>
+</div>
+<div align="center">
+  <a href="https://github.com/JenSte/aiotus/actions">
+    <img alt="CI Status" src="https://img.shields.io/github/workflow/status/JenSte/aiotus/Continuous Integration?style=flat-square">
+  </a>
+  <a href="https://codecov.io/gh/JenSte/aiotus">
+    <img alt="Code Coverage" src="https://img.shields.io/codecov/c/github/JenSte/aiotus?style=flat-square">
+  </a>
+  <a href="https://aiotus.readthedocs.io/en/latest">
+    <img alt="Documentation Status" src="https://img.shields.io/readthedocs/aiotus?style=flat-square">
+  </a>
+  <a href="https://pypi.org/project/aiotus">
+    <img alt="PyPI Package Version" src="https://img.shields.io/pypi/v/aiotus?style=flat-square">
+  </a>
+</div>
 
 ``aiotus`` implements the client side of the [tus](https://tus.io) protocol.
 

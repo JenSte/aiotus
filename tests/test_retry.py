@@ -21,7 +21,7 @@ class TestRetry:
         )
 
         assert location is not None
-        assert tus_server["metadata"] == "Content-Type aW1hZ2UvanBlZw==, key"
+        assert tus_server["metadata"] == "Content-Type aW1hZ2UvanBlZw==,key"
         assert tus_server["data"] is not None
         assert tus_server["data"] == memory_file.getbuffer()
         assert tus_server["post_headers"] is not None

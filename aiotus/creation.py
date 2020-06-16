@@ -75,7 +75,7 @@ async def create(
             return " " + encoded_string
 
         pairs = [f"{k}{encode_value(v)}" for k, v in metadata.items()]
-        headers["Upload-Metadata"] = ", ".join(pairs)
+        headers["Upload-Metadata"] = ",".join(pairs)
 
     logger.debug("Creating upload...")
     async with await session.post(url, headers=headers, ssl=ssl) as response:

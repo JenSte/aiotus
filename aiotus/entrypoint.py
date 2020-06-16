@@ -15,6 +15,11 @@ def aiotus_upload() -> int:
         epilog="This program is part of the aiotus python package.",
     )
     parser.add_argument("--debug", action="store_true", help="log debug messages")
+    parser.add_argument(
+        "--metadata",
+        action="append",
+        help="additional metadata to upload ('key[=value]')",
+    )
     parser.add_argument("endpoint", type=str, help="creation URL of the tus server")
     parser.add_argument("file", type=str, help="file to upload")
     args = parser.parse_args()
@@ -29,6 +34,11 @@ def aiotus_upload() -> int:
     mime_type, _ = mimetypes.guess_type(args.file)
     if mime_type:
         metadata["mime_type"] = mime_type.encode()
+
+    if args.metadata:
+        for meta in args.metadata:
+            kv = meta.split("=", maxsplit=1)
+            metadata[kv[0]] = kv[1].encode() if (len(kv) == 2) else None
 
     try:
         with open(args.file, "rb") as file:

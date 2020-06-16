@@ -49,3 +49,28 @@ class TestAiotusClients:
                 lines.sort()
 
                 assert lines == expected_output
+
+    def test_additional_metadata(self, tusd):
+        with unittest.mock.patch(
+            "sys.argv",
+            [
+                "aiotus-upload",
+                "--metadata",
+                "key1=value1",
+                "--metadata",
+                "key2",
+                str(tusd.url),
+                __file__,
+            ],
+        ):
+            with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
+                assert 0 == aiotus.entrypoint.aiotus_upload()
+                url = sys.stdout.getvalue().strip()
+
+        with unittest.mock.patch("sys.argv", ["aiotus-metadata", url]):
+            with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
+                assert 0 == aiotus.entrypoint.aiotus_metadata()
+
+                lines = sys.stdout.getvalue().splitlines(False)
+                assert "key1: value1" in lines
+                assert "key2" in lines

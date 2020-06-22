@@ -14,7 +14,7 @@ pytest-aiohttp==0.3.0
 pytest-cov==2.10.0
 pytest-xprocess==0.13.1
 pytest==5.4.3
-sphinx-autodoc-typehints==1.10.3
+sphinx-autodoc-typehints==1.11.0
 
 setuptools
 twine==3.1.1

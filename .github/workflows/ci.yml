@@ -27,7 +27,7 @@ jobs:
         flake8 aiotus tests
     - name: Run isort
       run: |
-        isort --recursive aiotus tests
+        isort aiotus tests
     - name: Run mypy
       run: |
         mypy --strict aiotus

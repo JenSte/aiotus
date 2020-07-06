@@ -28,7 +28,6 @@ isort-check:
 	@isort \
 	    --check-only \
 	    --diff \
-	    --recursive \
 	    aiotus tests setup.py
 
 mypy-check:

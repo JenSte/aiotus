@@ -21,6 +21,9 @@
   <a href="https://codecov.io/gh/JenSte/aiotus">
     <img alt="Code Coverage" src="https://img.shields.io/codecov/c/github/JenSte/aiotus?style=flat-square">
   </a>
+  <a href="https://sonarcloud.io/dashboard?id=JenSte_aiotus">
+    <img alt="Quality Gate" src="https://img.shields.io/sonar/quality_gate/JenSte_aiotus?server=https%3A%2F%2Fsonarcloud.io&style=flat-square">
+  </a>
   <a href="https://aiotus.readthedocs.io/en/latest">
     <img alt="Documentation Status" src="https://img.shields.io/readthedocs/aiotus?style=flat-square">
   </a>
@@ -61,7 +64,7 @@ metadata = aiotus.metadata(location)
 
 ## Requirements
 
-* Python >= 3.7
+* [Python](https://www.python.org) ≥ 3.7
 * [aiohttp](https://pypi.org/project/aiohttp)
 * [tenacity](https://pypi.org/project/tenacity)
 

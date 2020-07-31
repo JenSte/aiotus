@@ -114,15 +114,15 @@ class TestMetadata:
         assert md == {"k1": b"v1", "k2": b"v2"}
 
         with pytest.raises(binascii.Error) as excinfo:
-            md = aiotus.core._parse_metadata("k1 djE")
+            aiotus.core._parse_metadata("k1 djE")
         assert "padding" in str(excinfo.value)
 
         with pytest.raises(binascii.Error) as excinfo:
-            md = aiotus.core._parse_metadata("k1 dj&=")
+            aiotus.core._parse_metadata("k1 dj&=")
         assert "Non-base64" in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
-            md = aiotus.core._parse_metadata("k v v")
+            aiotus.core._parse_metadata("k v v")
         assert "more than two elements" in str(excinfo.value)
 
     async def test_metadata(self, aiohttp_server):
@@ -157,7 +157,7 @@ class TestMetadata:
             assert md == {}
 
             with pytest.raises(aiotus.ProtocolError) as excinfo:
-                md = await aiotus.core.metadata(session, server.make_url("/invalid"))
+                await aiotus.core.metadata(session, server.make_url("/invalid"))
                 assert "Unable to parse metadata" in str(excinfo.value)
 
             md = await aiotus.core.metadata(session, server.make_url("/valid"))

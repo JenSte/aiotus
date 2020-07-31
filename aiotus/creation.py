@@ -16,6 +16,23 @@ from . import common
 from .log import logger
 
 
+def _check_metadata_keys(metadata: common.Metadata) -> None:
+    """Check if the metadata keys are valid.
+
+    Raises a 'ValueError' exception if a key is invalid.
+    """
+
+    for k in metadata:
+        if not k.isascii():
+            raise ValueError("Metadata keys must only contain ASCII characters.")
+
+        if " " in k:
+            raise ValueError("Metadata keys must not contain spaces.")
+
+        if "," in k:
+            raise ValueError("Metadata keys must not contain commas.")
+
+
 async def create(
     session: aiohttp.ClientSession,
     url: yarl.URL,
@@ -47,16 +64,7 @@ async def create(
     )
 
     if metadata:
-        # Check metadata keys before we proceed.
-        for k in metadata:
-            if not k.isascii():
-                raise ValueError("Metadata keys must only contain ASCII characters.")
-
-            if " " in k:
-                raise ValueError("Metadata keys must not contain spaces.")
-
-            if "," in k:
-                raise ValueError("Metadata keys must not contain commas.")
+        _check_metadata_keys(metadata)
 
         def encode_value(value: Optional[bytes]) -> str:
             if value is None:

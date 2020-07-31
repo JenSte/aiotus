@@ -13,7 +13,7 @@ pep8-naming==0.11.1
 pytest-aiohttp==0.3.0
 pytest-cov==2.10.0
 pytest-xprocess==0.13.1
-pytest==6.0.0
+pytest==6.0.1
 sphinx-autodoc-typehints==1.11.0
 
 setuptools

@@ -5,15 +5,62 @@ Implementation of the
 
 import asyncio
 import base64
+import dataclasses
 import io
 from copy import copy
-from typing import BinaryIO, Dict, Optional
+from typing import BinaryIO, Dict, List, Optional
 
 import aiohttp
+import multidict
 import yarl
 
 from . import common
 from .log import logger
+
+
+@dataclasses.dataclass
+class ServerConfiguration:
+    """Class to hold the server's configuration."""
+
+    protocol_versions: List[str]
+    """
+    List of protocol versions supported by the server, sorted by the server's
+    preference.
+    """
+
+    max_size: Optional[int]
+    """
+    The maximum allowed file size (in bytes), if reported by the server.
+    """
+
+    protocol_extensions: List[str]
+    """
+    The protocol extensions supported by the server.
+    """
+
+
+def _parse_positive_integer_header(
+    headers: multidict.CIMultiDictProxy[str], header_name: str
+) -> int:
+    """Convert a HTTP header into a positive integer value.
+
+    Raises a ProtocolError if the conversion is not posible.
+    """
+
+    try:
+        header_value = headers[header_name]
+        result = int(header_value)
+        if result < 0:
+            raise RuntimeError()
+
+        return result
+    except asyncio.CancelledError:  # pragma: no cover
+        raise
+    except Exception:
+        raise common.ProtocolError(
+            f'Unable to convert "{header_name}" header '
+            f'"{header_value}" to a positive integer.'
+        )
 
 
 async def offset(
@@ -44,20 +91,7 @@ async def offset(
                 'but no "Upload-Offset" header in response.'
             )
 
-        try:
-            offset_header = response.headers["Upload-Offset"]
-            current_offset = int(offset_header)
-            if current_offset < 0:
-                raise RuntimeError()
-
-            return current_offset
-        except asyncio.CancelledError:  # pragma: no cover
-            raise
-        except Exception:
-            raise RuntimeError(
-                f'Unable to convert "Upload-Offset" header '
-                f'"{offset_header}" to a positive integer.'
-            )
+        return _parse_positive_integer_header(response.headers, "Upload-Offset")
 
 
 def _parse_metadata(header: str) -> common.Metadata:
@@ -164,3 +198,40 @@ async def upload_buffer(
             response.raise_for_status()
 
         current_offset += len(chunk)
+
+
+async def configuration(
+    session: aiohttp.ClientSession,
+    url: yarl.URL,
+    ssl: common.SSLArgument = None,
+    headers: Optional[Dict[str, str]] = None,
+) -> ServerConfiguration:
+    """Get the server's configuration.
+
+    :param session: HTTP session to use for connections.
+    :param url: The creation endpoint of the server.
+    :param ssl: SSL validation mode, passed on to aiohttp.
+    :param headers: Optional headers used in the request.
+    :return: An object describing the server's configuration.
+    """
+
+    logger.debug("Querying server configuration...")
+    async with await session.options(url, headers=headers, ssl=ssl) as response:
+        response.raise_for_status()
+
+        if "Tus-Version" not in response.headers:
+            raise common.ProtocolError('"Tus-Version" header not present.')
+
+        versions = response.headers["Tus-Version"].split(",")
+        versions = [v.strip() for v in versions]
+
+        max_size = None
+        if "Tus-Max-Size" in response.headers:
+            max_size = _parse_positive_integer_header(response.headers, "Tus-Max-Size")
+
+        extensions = []
+        if "Tus-Extension" in response.headers:
+            extensions = response.headers["Tus-Extension"].split(",")
+            extensions = [e.strip() for e in extensions]
+
+        return ServerConfiguration(versions, max_size, extensions)

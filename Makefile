@@ -42,7 +42,8 @@ test .coverage: tusd tests/nginx.key tests/selfsigned.crt
 	pytest --cov=aiotus tests
 
 coverage_html/index.html: .coverage
-	coverage html -d coverage_html
+	@coverage html -d coverage_html
+	@echo Coverage report ready at $$(realpath $@)
 
 doc:
 	make -C docs clean html

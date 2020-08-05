@@ -60,6 +60,8 @@ class RetryConfiguration:
 
 
 def _make_log_before_function(s: str) -> Callable[[tenacity.RetryCallState], None]:
+    """Create a function used to log before a retry attempt."""
+
     def log(retry_state: tenacity.RetryCallState) -> None:
 
         if retry_state.attempt_number > 1:
@@ -73,6 +75,8 @@ def _make_log_before_function(s: str) -> Callable[[tenacity.RetryCallState], Non
 def _make_log_before_sleep_function(
     s: str,
 ) -> Callable[[tenacity.RetryCallState], None]:
+    """Create a function used when a call made through tenacity fails."""
+
     def log(retry_state: tenacity.RetryCallState) -> None:
         if (retry_state.next_action is not None) and (retry_state.outcome is not None):
             duration = retry_state.next_action.sleep
@@ -86,6 +90,18 @@ def _make_log_before_sleep_function(
             )
 
     return log
+
+
+def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying:
+    """Create a tenacity retry object."""
+
+    return tenacity.AsyncRetrying(
+        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
+        stop=tenacity.stop_after_attempt(config.retry_attempts),
+        wait=tenacity.wait_exponential(max=config.max_retry_period_seconds),
+        before=_make_log_before_function(s),
+        before_sleep=_make_log_before_sleep_function(s),
+    )
 
 
 async def upload(
@@ -114,21 +130,8 @@ async def upload(
     if metadata is None:
         metadata = {}
 
-    retrying_create = tenacity.AsyncRetrying(
-        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
-        stop=tenacity.stop_after_attempt(config.retry_attempts),
-        wait=tenacity.wait_exponential(max=config.max_retry_period_seconds),
-        before=_make_log_before_function("upload creation"),
-        before_sleep=_make_log_before_sleep_function("upload creation"),
-    )
-
-    retrying_upload_file = tenacity.AsyncRetrying(
-        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
-        stop=tenacity.stop_after_attempt(config.retry_attempts),
-        wait=tenacity.wait_exponential(max=config.max_retry_period_seconds),
-        before=_make_log_before_function("upload"),
-        before_sleep=_make_log_before_sleep_function("upload"),
-    )
+    retrying_create = _make_retrying("upload creation", config)
+    retrying_upload_file = _make_retrying("upload", config)
 
     try:
         ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]
@@ -195,13 +198,7 @@ async def metadata(
     else:
         url = endpoint
 
-    retrying_metadata = tenacity.AsyncRetrying(
-        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
-        stop=tenacity.stop_after_attempt(config.retry_attempts),
-        wait=tenacity.wait_exponential(max=config.max_retry_period_seconds),
-        before=_make_log_before_function("query metadata"),
-        before_sleep=_make_log_before_sleep_function("query metadata"),
-    )
+    retrying_metadata = _make_retrying("query metadata", config)
 
     try:
         ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]

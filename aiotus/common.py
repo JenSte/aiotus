@@ -1,5 +1,5 @@
 import ssl
-from typing import Dict, Optional, Union
+from typing import Mapping, Optional, Union
 
 import aiohttp
 
@@ -10,7 +10,7 @@ TUS_PROTOCOL_VERSION = "1.0.0"
 SSLArgument = Optional[Union[bool, ssl.SSLContext, aiohttp.Fingerprint]]
 
 #: The type used to hold metadata of an upload.
-Metadata = Dict[str, Optional[bytes]]
+Metadata = Mapping[str, Optional[bytes]]
 
 
 class ProtocolError(Exception):

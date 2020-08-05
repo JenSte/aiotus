@@ -101,7 +101,7 @@ def _parse_metadata(header: str) -> common.Metadata:
     if not header:
         return {}
 
-    md: common.Metadata = {}
+    md: Dict[str, Optional[bytes]] = {}
     for pair in header.split(","):
         kv = pair.split()
         if len(kv) == 1:

@@ -6,7 +6,7 @@ from typing import (
     AsyncIterator,
     BinaryIO,
     Callable,
-    Dict,
+    Mapping,
     Optional,
     Union,
 )
@@ -110,7 +110,7 @@ async def upload(
     metadata: Optional[common.Metadata] = None,
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 
@@ -180,7 +180,7 @@ async def metadata(
     endpoint: Union[str, yarl.URL],
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> Optional[common.Metadata]:
     """Retrieve the metadata of an upload.
 

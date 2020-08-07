@@ -7,7 +7,7 @@ to the tus protocol.
 import asyncio
 import base64
 import io
-from typing import BinaryIO, Dict, Optional
+from typing import BinaryIO, Mapping, Optional
 
 import aiohttp
 import yarl
@@ -39,7 +39,7 @@ async def create(
     file: BinaryIO,
     metadata: common.Metadata,
     ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> yarl.URL:
     """Create an upload.
 
@@ -54,9 +54,9 @@ async def create(
 
     loop = asyncio.get_event_loop()
     total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
-    headers = headers or {}
+    tus_headers = dict(headers or {})
 
-    headers.update(
+    tus_headers.update(
         {
             "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
             "Upload-Length": str(total_size),
@@ -75,10 +75,10 @@ async def create(
             return " " + encoded_string
 
         pairs = [f"{k}{encode_value(v)}" for k, v in metadata.items()]
-        headers["Upload-Metadata"] = ",".join(pairs)
+        tus_headers["Upload-Metadata"] = ",".join(pairs)
 
     logger.debug("Creating upload...")
-    async with await session.post(url, headers=headers, ssl=ssl) as response:
+    async with await session.post(url, headers=tus_headers, ssl=ssl) as response:
         if response.status != 201:
             raise common.ProtocolError(
                 f"Wrong status code {response.status}, expected 201."

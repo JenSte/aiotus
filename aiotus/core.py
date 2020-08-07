@@ -7,8 +7,7 @@ import asyncio
 import base64
 import dataclasses
 import io
-from copy import copy
-from typing import BinaryIO, Dict, List, Optional
+from typing import BinaryIO, Dict, List, Mapping, Optional
 
 import aiohttp
 import multidict
@@ -67,7 +66,7 @@ async def offset(
     session: aiohttp.ClientSession,
     location: yarl.URL,
     ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> int:
     """Get the number of uploaded bytes.
 
@@ -78,11 +77,11 @@ async def offset(
     :return: The number of bytes that are already on the server.
     """
 
-    headers = headers or {}
-    headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
+    tus_headers = dict(headers or {})
+    tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
     logger.debug(f'Getting offset of "{location}"...')
-    async with await session.head(location, headers=headers, ssl=ssl) as response:
+    async with await session.head(location, headers=tus_headers, ssl=ssl) as response:
         response.raise_for_status()
 
         if "Upload-Offset" not in response.headers:
@@ -118,7 +117,7 @@ async def metadata(
     session: aiohttp.ClientSession,
     location: yarl.URL,
     ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> common.Metadata:
     """Get the metadata associated with an upload.
 
@@ -129,11 +128,11 @@ async def metadata(
     :return: The metadata of the upload.
     """
 
-    headers = headers or {}
-    headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
+    tus_headers = dict(headers or {})
+    tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
     logger.debug(f'Getting metadata of "{location}"...')
-    async with await session.head(location, headers=headers, ssl=ssl) as response:
+    async with await session.head(location, headers=tus_headers, ssl=ssl) as response:
         response.raise_for_status()
 
         if "Upload-Metadata" not in response.headers:
@@ -153,7 +152,7 @@ async def upload_buffer(
     buffer: BinaryIO,
     ssl: common.SSLArgument = None,
     chunksize: int = 4 * 1024 * 1024,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> None:
     """Upload data to the server.
 
@@ -166,7 +165,6 @@ async def upload_buffer(
     """
 
     loop = asyncio.get_event_loop()
-    headers = headers or {}
 
     current_offset = await offset(session, location, ssl=ssl)
     await loop.run_in_executor(None, buffer.seek, current_offset, io.SEEK_SET)
@@ -181,8 +179,8 @@ async def upload_buffer(
 
         # Use the parameter headers as base to make sure that users do not overwrite
         # important data like 'Content-Type'.
-        request_headers = copy(headers)
-        request_headers.update(
+        tus_headers = dict(headers or {})
+        tus_headers.update(
             {
                 "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
                 "Upload-Offset": str(current_offset),
@@ -193,7 +191,7 @@ async def upload_buffer(
 
         logger.debug(f'Uploading {len(chunk)} bytes to "{location}"...')
         async with await session.patch(
-            location, headers=request_headers, data=chunk, ssl=ssl
+            location, headers=tus_headers, data=chunk, ssl=ssl
         ) as response:
             response.raise_for_status()
 
@@ -204,7 +202,7 @@ async def configuration(
     session: aiohttp.ClientSession,
     url: yarl.URL,
     ssl: common.SSLArgument = None,
-    headers: Optional[Dict[str, str]] = None,
+    headers: Optional[Mapping[str, str]] = None,
 ) -> ServerConfiguration:
     """Get the server's configuration.
 

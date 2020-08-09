@@ -36,7 +36,7 @@ def _check_metadata_keys(metadata: common.Metadata) -> None:
 async def create(
     session: aiohttp.ClientSession,
     url: yarl.URL,
-    file: BinaryIO,
+    file: Optional[BinaryIO],
     metadata: common.Metadata,
     ssl: common.SSLArgument = None,
     headers: Optional[Mapping[str, str]] = None,
@@ -46,22 +46,21 @@ async def create(
     :param session: HTTP session to use for connections.
     :param url: The creation endpoint of the server.
     :param file: The file object to upload.
+        Used to determine the length of data to be uploaded. If not given, the
+        corresponding HTTP header is not included in the request.
     :param metadata: Additional metadata for the upload.
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param headers: Optional headers used in the request.
     :return: The URL to upload the data to.
     """
 
-    loop = asyncio.get_event_loop()
-    total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
     tus_headers = dict(headers or {})
+    tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
-    tus_headers.update(
-        {
-            "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
-            "Upload-Length": str(total_size),
-        }
-    )
+    if file is not None:
+        loop = asyncio.get_event_loop()
+        total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
+        tus_headers["Upload-Length"] = str(total_size)
 
     if metadata:
         _check_metadata_keys(metadata)

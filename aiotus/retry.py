@@ -6,6 +6,7 @@ from typing import (
     AsyncIterator,
     BinaryIO,
     Callable,
+    Iterable,
     Mapping,
     Optional,
     Union,
@@ -220,5 +221,134 @@ async def metadata(
         logger.error(
             f"Unable to get metadata, even after retrying: {e.last_attempt.exception()}"
         )
+
+    return None
+
+
+async def _upload_partial(
+    semaphore: asyncio.Semaphore,
+    endpoint: Union[str, yarl.URL],
+    file: BinaryIO,
+    client_session: Optional[aiohttp.ClientSession] = None,
+    config: RetryConfiguration = RetryConfiguration(),
+    headers: Optional[Mapping[str, str]] = None,
+) -> str:
+    """Helper function for "upload_multiple() to upload a single part."""
+
+    tus_headers = dict(headers or {})
+    tus_headers["Upload-Concat"] = "partial"
+
+    async with semaphore:
+        url = await upload(endpoint, file, None, client_session, config, tus_headers)
+
+    if url is None:
+        raise RuntimeError("Unable to upload part.")
+
+    return url.path
+
+
+async def upload_multiple(
+    endpoint: Union[str, yarl.URL],
+    files: Iterable[BinaryIO],
+    metadata: Optional[common.Metadata] = None,
+    client_session: Optional[aiohttp.ClientSession] = None,
+    config: RetryConfiguration = RetryConfiguration(),
+    headers: Optional[Mapping[str, str]] = None,
+    parallel_uploads: int = 3,
+) -> Optional[yarl.URL]:
+    """Upload multiple files and then use the "concatenation" protocol extension
+    to combine the parts on the server side.
+
+    :param endpoint: The creation endpoint of the server.
+    :param files: The files to upload.
+    :param metadata: Additional metadata for the final upload.
+    :param client_session: An aiohttp ClientSession to use.
+    :param config: Settings to customize the retry behaviour.
+    :param headers: Optional headers used in the request.
+    :param parallel_upload: The number of parallel uploads to do concurrently.
+    :return: The location of the final (concatenated) file on the server.
+    """
+
+    url = yarl.URL(endpoint)
+
+    if metadata is None:
+        metadata = {}
+
+    retrying_config = _make_retrying("query configuration", config)
+    retrying_create = _make_retrying("upload creation", config)
+
+    try:
+        ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]
+        if client_session is None:
+            ctx = aiohttp.ClientSession()
+        else:
+            ctx = asyncnullcontext(client_session)
+
+        async with ctx as session:
+            #
+            # Check if the server supports the "concatenation" extension.
+            #
+            server_config = await retrying_config.call(
+                core.configuration, session, url, ssl=config.ssl, headers=headers
+            )
+
+            if "concatenation" not in server_config.protocol_extensions:
+                raise RuntimeError(
+                    'Server does not support the "concatenation" extension.'
+                )
+
+            #
+            # Upload the individual parts.
+            #
+
+            # Used to limit the number of coroutines that perform uploads in parallel.
+            semaphore = asyncio.Semaphore(parallel_uploads)
+
+            coros = [
+                _upload_partial(semaphore, endpoint, f, session, config, headers)
+                for f in files
+            ]
+            tasks = [asyncio.create_task(c) for c in coros]
+
+            try:
+                paths = await asyncio.gather(*tasks)
+            except asyncio.CancelledError:  # pragma: no cover
+                raise
+            except Exception as e:
+                logger.info("Cancelling other uploads...")
+                for t in tasks:
+                    if not t.done():
+                        t.cancel()
+
+                raise RuntimeError(f"Upload of a part failed: {e}")
+
+            concat_header = "final;" + " ".join(paths)
+
+            #
+            # Do the final concatenation.
+            #
+            final_headers = dict(headers or {})
+            final_headers.update({"Upload-Concat": concat_header})
+
+            location: yarl.URL
+            location = await retrying_create.call(
+                creation.create,
+                session,
+                url,
+                None,
+                metadata,
+                ssl=config.ssl,
+                headers=final_headers,
+            )
+
+            return location
+    except asyncio.CancelledError:  # pragma: no cover
+        raise
+    except tenacity.RetryError as e:
+        logger.error(
+            f"Unable to upload files, even after retrying: {e.last_attempt.exception()}"
+        )
+    except Exception as e:
+        logger.error(f"Unable to upload files: {e}")
 
     return None

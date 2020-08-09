@@ -17,6 +17,7 @@ async def tus_server(aiohttp_server):
     state = {
         # Number of times the respective handlers will fail.
         "retries_create": 0,
+        "retries_options": 0,
         "retries_head": 0,
         "retries_upload": 0,
         # URLs to create and upload. (Filled out later.)
@@ -46,6 +47,19 @@ async def tus_server(aiohttp_server):
 
         headers = {"Location": str(state["upload_endpoint"])}
         raise aiohttp.web.HTTPCreated(headers=headers)
+
+    async def handler_options(request):
+        state["retries_options"] -= 1
+        if state["retries_options"] > 0:
+            raise aiohttp.web.HTTPInternalServerError()
+
+        headers = {
+            "Tus-Resumable": "1.0.0",
+            "Tus-Version": "1.0.0",
+            "Tus-Extension": "creation",
+        }
+
+        raise aiohttp.web.HTTPNoContent(headers=headers)
 
     async def handler_head(request):
         state["retries_head"] -= 1
@@ -78,6 +92,7 @@ async def tus_server(aiohttp_server):
 
     app = aiohttp.web.Application()
     app.router.add_route("POST", "/files", handler_create)
+    app.router.add_route("OPTIONS", "/files", handler_options)
     app.router.add_route("HEAD", "/files/" + upload_name, handler_head)
     app.router.add_route("PATCH", "/files/" + upload_name, handler_upload)
 

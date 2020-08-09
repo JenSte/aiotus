@@ -1,5 +1,7 @@
 """Test the 'upload()' function."""
 
+import io
+
 import aiohttp
 import yarl
 
@@ -179,3 +181,80 @@ class TestRetry:
 
         md2 = await aiotus.metadata(location)
         assert md1 == md2
+
+
+class TestUploadMultiple:
+    """Test the 'aiotus.upload_multiple()' function."""
+
+    async def test_upload_functional(self, tusd, memory_file):
+        """Upload files, read back as a single file."""
+
+        file_a = io.BytesIO(b"\x00\x01")
+        file_b = io.BytesIO(b"\x02\x03")
+        file_c = io.BytesIO(b"\x04\x05")
+        file_d = io.BytesIO(b"\x06\x07")
+
+        md1 = {"key": "value".encode()}
+
+        location = await aiotus.upload_multiple(
+            tusd.url, [file_a, file_b, file_c, file_d], md1
+        )
+
+        md2 = await aiotus.metadata(location)
+        assert md1 == md2
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(location) as response:
+                body = await response.read()
+
+                assert body == b"\x00\x01\x02\x03\x04\x05\x06\x07"
+
+    async def test_upload_functional_session(self, tusd, memory_file):
+        """Upload files, read back as a single file, passing in a HTTP session."""
+
+        file_a = io.BytesIO(b"\x00\x01")
+        file_b = io.BytesIO(b"\x02\x03")
+        file_c = io.BytesIO(b"\x04\x05")
+        file_d = io.BytesIO(b"\x06\x07")
+
+        async with aiohttp.ClientSession() as session:
+            location = await aiotus.upload_multiple(
+                tusd.url, [file_a, file_b, file_c, file_d], None, session
+            )
+
+            md = await aiotus.metadata(location)
+            assert not md
+
+            async with session.get(location) as response:
+                body = await response.read()
+
+                assert body == b"\x00\x01\x02\x03\x04\x05\x06\x07"
+
+    async def test_not_supported(self, tus_server, memory_file):
+        """Try uploading to a server that does not support concatenation."""
+
+        location = await aiotus.upload_multiple(
+            tus_server["create_endpoint"], [memory_file]
+        )
+        assert location is None
+
+    async def test_part_failure(self, tusd):
+        """Check the handling of a failure to upload a part."""
+
+        file_a = io.BytesIO(b"\x00\x01")
+        file_b = open("/proc/self/mem", "rb")
+
+        location = await aiotus.upload_multiple(tusd.url, [file_a, file_b])
+        assert location is None
+
+    async def test_timeout(self, tus_server, memory_file):
+        """Test handling of the retry exception."""
+
+        tus_server["retries_options"] = 20
+
+        config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
+        location = await aiotus.upload_multiple(
+            tus_server["create_endpoint"], [memory_file], config=config
+        )
+
+        assert location is None

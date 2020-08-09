@@ -37,7 +37,8 @@
 ## Features
 
 * Implements the [core protocol](https://tus.io/protocols/resumable-upload.html#core-protocol) as
-  well as the [creation extension](https://tus.io/protocols/resumable-upload.html#creation).
+  well as the [creation](https://tus.io/protocols/resumable-upload.html#creation)
+  and [concatenation](https://tus.io/protocols/resumable-upload.html#concatenation) extensions.
 * Built-in retry support in case of communication errors.
 * Extensive test bench, including tests against the reference [tusd](https://github.com/tus/tusd) server.
 

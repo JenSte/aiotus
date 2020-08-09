@@ -7,9 +7,9 @@ jobs:
         python-version: [3.7, 3.8]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2.3.2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2.1.1
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies with apt
@@ -45,7 +45,7 @@ jobs:
       run: |
         PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
     - name: Upload coverage information
-      uses: codecov/codecov-action@v1.0.4
+      uses: codecov/codecov-action@v1.0.12
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
     - name: Generate documentation
@@ -55,9 +55,9 @@ jobs:
     needs: checks
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2.3.2
     - name: Set up Python 3.7
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2.1.1
       with:
         python-version: 3.7
     - name: Install dependencies
@@ -68,13 +68,13 @@ jobs:
       run: |
         python setup.py sdist bdist_wheel
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2.1.3
       with:
         name: packages
         path: dist/
     - name: Publish to TestPyPi
       if: (github.ref == 'refs/heads/master') || (github.event_name == 'release' && github.event.action == 'created')
-      uses: pypa/gh-action-pypi-publish@v1.0.0a0
+      uses: pypa/gh-action-pypi-publish@v1.3.1
       with:
         user: __token__
         password: ${{ secrets.test_pypi_token }}

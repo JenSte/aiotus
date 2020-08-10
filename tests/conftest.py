@@ -1,5 +1,6 @@
 import dataclasses
 import io
+import math
 import os.path
 import tempfile
 from typing import Optional
@@ -30,6 +31,8 @@ async def tus_server(aiohttp_server):
         # Complete HTTP headers used in the last head/post request.
         "head_headers": None,
         "post_headers": None,
+        # Drop some bytes while uploading, but don't return an error.
+        "drop_upload": False,
     }
 
     async def handler_create(request):
@@ -79,14 +82,24 @@ async def tus_server(aiohttp_server):
     async def handler_upload(request):
         body = await request.read()
 
+        if int(request.headers["Upload-Offset"]) != len(state["data"]):
+            raise aiohttp.web.HTTPConflict()
+
         state["retries_upload"] -= 1
         if state["retries_upload"] > 0:
             # Pretend we did only receive half of the data before an error happend.
             state["data"].extend(body[: len(body) // 2])
             raise aiohttp.web.HTTPInternalServerError()
 
+        if state["drop_upload"]:
+            # Simulate the situation where the server can only store a subset
+            # of the data that was uploaded. (In contrast to the error that we simulate
+            # above we do not return an HTTP error status code.)
+            body = body[: math.ceil(len(body) / 2.0)]
+
         state["data"].extend(body)
-        raise aiohttp.web.HTTPNoContent()
+        headers = {"Tus-Resumable": "1.0.0", "Upload-Offset": str(len(state["data"]))}
+        raise aiohttp.web.HTTPNoContent(headers=headers)
 
     upload_name = "1234abcdefgh"
 
@@ -107,6 +120,24 @@ async def tus_server(aiohttp_server):
 def memory_file():
     """Dummy data to use during tests."""
     return io.BytesIO(b"\x00\x01\x02\x03")
+
+
+class EOFBytesIO:
+    """A wrapper around 'io.BytesIO' that never returns data."""
+
+    def __init__(self, b):
+        self._b = b
+
+    def seek(self, *args, **kwargs):
+        return self._b.seek(*args, **kwargs)
+
+    def read(self, *args, **kwargs):
+        return b""
+
+
+@pytest.fixture
+def eof_memory_file(memory_file):
+    return EOFBytesIO(memory_file)
 
 
 @dataclasses.dataclass

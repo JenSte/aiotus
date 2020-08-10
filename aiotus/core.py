@@ -166,24 +166,48 @@ async def upload_buffer(
 
     loop = asyncio.get_event_loop()
 
-    current_offset = await offset(session, location, ssl=ssl)
-    await loop.run_in_executor(None, buffer.seek, current_offset, io.SEEK_SET)
+    total_size = await loop.run_in_executor(None, buffer.seek, 0, io.SEEK_END)
 
-    logger.debug(f'Resuming upload of "{location}" at offset {current_offset}..."')
+    # The position in the file where we currently read from.
+    current_read_offset = -1
+
+    # We ask the server for the number of bytes it already has for the upload. This
+    # makes it possible to use this function also for resuming aborted uploads.
+    current_server_offset = await offset(session, location, ssl=ssl)
+
+    logger.debug(
+        f'Resuming upload of "{location}" at offset {current_server_offset}..."'
+    )
 
     while True:
-        chunk = await loop.run_in_executor(None, buffer.read, chunksize)
-        if not chunk:
-            logger.debug("EOF reached")
+        if current_server_offset == total_size:
+            # Done, the whole file is on the server.
+            logger.info("Complete buffer uploaded.")
             break
 
-        # Use the parameter headers as base to make sure that users do not overwrite
-        # important data like 'Content-Type'.
+        if current_server_offset > total_size:
+            # The offset that the server expects next does not exist.
+            raise common.ProtocolError("Server offset too big.")
+
+        if current_read_offset != current_server_offset:
+            # Seek to the offset that the server expects next.
+            current_read_offset = current_server_offset
+            await loop.run_in_executor(
+                None, buffer.seek, current_read_offset, io.SEEK_SET
+            )
+
+        chunk = await loop.run_in_executor(None, buffer.read, chunksize)
+        if not chunk:
+            # If the checks above are correct, we should never get here.
+            raise RuntimeError("Buffer returned unexpected EOF.")
+
+        current_read_offset += len(chunk)
+
         tus_headers = dict(headers or {})
         tus_headers.update(
             {
                 "Tus-Resumable": common.TUS_PROTOCOL_VERSION,
-                "Upload-Offset": str(current_offset),
+                "Upload-Offset": str(current_server_offset),
                 "Content-Length": str(len(chunk)),
                 "Content-Type": "application/offset+octet-stream",
             }
@@ -195,7 +219,11 @@ async def upload_buffer(
         ) as response:
             response.raise_for_status()
 
-        current_offset += len(chunk)
+            # Safe the value of the current offset on the server side, at the beginning
+            # of this loop are checks to see if it is valid.
+            current_server_offset = _parse_positive_integer_header(
+                response.headers, "Upload-Offset"
+            )
 
 
 async def configuration(

@@ -164,6 +164,81 @@ class TestMetadata:
             assert md == {"k1": None, "k2": b"value"}
 
 
+class TestUploadBuffer:
+    async def test_upload_buffer(self, tus_server, memory_file):
+        """Test the upload function without simulating errors."""
+
+        # We don't want to test the creation functionality here, so just create the
+        # byte array so that 'tus_server' can accept data.
+        tus_server["data"] = bytearray()
+
+        async with aiohttp.ClientSession() as s:
+            # Pass a small chunksize so that we have multiple uploads even with
+            # the small test file.
+            await aiotus.core.upload_buffer(
+                s, tus_server["upload_endpoint"], memory_file, ssl=None, chunksize=3
+            )
+
+        assert tus_server["data"] is not None
+        assert tus_server["data"] == memory_file.getbuffer()
+
+    async def test_server_offset(self, tus_server, memory_file):
+        """Test if the upload routine honors the offset value at the server side."""
+
+        tus_server["data"] = bytearray()
+
+        # Make the server drop half of the uploaded data for each request.
+        tus_server["drop_upload"] = True
+
+        async with aiohttp.ClientSession() as s:
+            await aiotus.core.upload_buffer(
+                s, tus_server["upload_endpoint"], memory_file, ssl=None, chunksize=3
+            )
+
+        assert tus_server["data"] is not None
+        assert tus_server["data"] == memory_file.getbuffer()
+
+    async def test_server_error(self, tus_server, memory_file):
+        """Simulate a server error."""
+
+        tus_server["data"] = bytearray()
+        tus_server["retries_upload"] = 2
+
+        with pytest.raises(aiohttp.ClientResponseError) as excinfo:
+            async with aiohttp.ClientSession() as s:
+                await aiotus.core.upload_buffer(
+                    s, tus_server["upload_endpoint"], memory_file
+                )
+
+        assert "Internal Server Error" in str(excinfo.value)
+
+    async def test_server_wrong_size(self, tus_server, memory_file):
+        """Simulate the case where the server has a bitter file than locally."""
+
+        tus_server["data"] = bytearray(20 * b"x")
+
+        with pytest.raises(aiotus.common.ProtocolError) as excinfo:
+            async with aiohttp.ClientSession() as s:
+                await aiotus.core.upload_buffer(
+                    s, tus_server["upload_endpoint"], memory_file
+                )
+
+        assert "Server offset too big" in str(excinfo.value)
+
+    async def test_eof(self, tus_server, eof_memory_file):
+        """Simulate the case where the local file shrinks during an upload."""
+
+        tus_server["data"] = bytearray()
+
+        with pytest.raises(RuntimeError) as excinfo:
+            async with aiohttp.ClientSession() as s:
+                await aiotus.core.upload_buffer(
+                    s, tus_server["upload_endpoint"], eof_memory_file
+                )
+
+        assert "Buffer returned unexpected EOF" in str(excinfo.value)
+
+
 class TestConfiguration:
     async def test_configuration_exceptions(self, aiohttp_server):
         """Check for the different exceptions that can be thrown."""

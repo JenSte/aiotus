@@ -1,14 +1,15 @@
 import asyncio
-import contextlib
 import dataclasses
+from types import TracebackType
 from typing import (
     AsyncContextManager,
-    AsyncIterator,
     BinaryIO,
     Callable,
     Iterable,
     Mapping,
     Optional,
+    Type,
+    TypeVar,
     Union,
 )
 
@@ -19,17 +20,25 @@ import yarl
 from . import common, core, creation
 from .log import logger
 
+T = TypeVar("T")
 
-@contextlib.asynccontextmanager
-async def asyncnullcontext(
-    enter_result: aiohttp.ClientSession,
-) -> AsyncIterator[aiohttp.ClientSession]:
-    """Asynchronous version of 'contextlib.nullcontext()'.
 
-    (Typed to 'aiohttp.ClientSession', as I could not get 'AsyncIterator[]' work with
-    generic 'TypeVar's.)
-    """
-    yield enter_result
+class asyncnullcontext(AsyncContextManager[T]):  # noqa: N801
+    """Asynchronous version of 'contextlib.nullcontext'."""
+
+    def __init__(self, aenter_result: T) -> None:
+        self._aenter_result = aenter_result
+
+    async def __aenter__(self) -> T:
+        return self._aenter_result
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType],
+    ) -> None:
+        return None
 
 
 @dataclasses.dataclass

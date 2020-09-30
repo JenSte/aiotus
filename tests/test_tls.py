@@ -1,5 +1,6 @@
 """Test uploading to a server behind a TLS proxy."""
 
+import shutil
 import ssl
 
 import aiohttp
@@ -8,6 +9,7 @@ import pytest  # type: ignore
 import aiotus
 
 
+@pytest.mark.skipif(shutil.which("nginx") is None, reason="nginx not found")
 class TestTLS:
     async def test_upload_fail(self, nginx_proxy, memory_file):
         """Test failed upload to a TLS server."""

@@ -1,8 +1,11 @@
 """Test the 'upload()' function."""
 
 import io
+import logging
 
 import aiohttp
+import pytest  # type: ignore
+import tenacity  # type: ignore
 import yarl
 
 import aiotus
@@ -258,3 +261,51 @@ class TestUploadMultiple:
         )
 
         assert location is None
+
+
+class TestTenacity:
+    """Test the log functions for tenacity."""
+
+    async def test_exception_logging(self, caplog):
+        rt = tenacity.AsyncRetrying(
+            retry=tenacity.retry_if_exception_type(RuntimeError),
+            stop=tenacity.stop_after_attempt(3),
+            before=aiotus.retry._make_log_before_function("test"),
+            before_sleep=aiotus.retry._make_log_before_sleep_function("test"),
+        )
+
+        with caplog.at_level(logging.INFO, logger="aiotus"):
+            with pytest.raises(tenacity.RetryError):
+                await rt.call(TestTenacity.raise_runtime_error)
+
+            lg = caplog.record_tuples
+            assert len(lg) == 4
+            assert lg[0][2] == "Test failed, retrying in 0 second(s): test error"
+            assert lg[1][2] == "Trying test again, attempt number 2..."
+            assert lg[2][2] == "Test failed, retrying in 0 second(s): test error"
+            assert lg[3][2] == "Trying test again, attempt number 3..."
+
+    async def test_result_logging(self, caplog):
+        rt = tenacity.AsyncRetrying(
+            retry=tenacity.retry_if_result(lambda r: r is None),
+            stop=tenacity.stop_after_attempt(2),
+            before=aiotus.retry._make_log_before_function("test"),
+            before_sleep=aiotus.retry._make_log_before_sleep_function("test"),
+        )
+
+        with caplog.at_level(logging.INFO, logger="aiotus"):
+            with pytest.raises(tenacity.RetryError):
+                await rt.call(TestTenacity.return_none)
+
+            lg = caplog.record_tuples
+            assert len(lg) == 2
+            assert lg[0][2] == "Test failed, retrying in 0 second(s): None"
+            assert lg[1][2] == "Trying test again, attempt number 2..."
+
+    @staticmethod
+    async def raise_runtime_error():
+        raise RuntimeError("test error")
+
+    @staticmethod
+    async def return_none():
+        return None

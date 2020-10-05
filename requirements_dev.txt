@@ -13,7 +13,7 @@ mypy==0.782
 pep8-naming==0.11.1
 pytest-aiohttp==0.3.0
 pytest-cov==2.10.1
-pytest-xprocess==0.14.0
+pytest-xprocess==0.15.0
 pytest==6.1.0
 sphinx-autodoc-typehints==1.11.0
 

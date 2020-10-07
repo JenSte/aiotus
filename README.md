@@ -83,6 +83,11 @@ Development versions can be installed from [TestPyPi](https://test.pypi.org/proj
 pip install --index-url https://test.pypi.org/simple --extra-index-url https://pypi.org/simple aiotus
 ```
 
+## Documentation
+
+The documentation can be found at [aiotus.readthedocs.io](https://aiotus.readthedocs.io/en/latest).
+
+
 ## License
 
 ``aiotus`` is licensed under the Apache 2.0 license.

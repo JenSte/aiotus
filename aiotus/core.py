@@ -219,7 +219,7 @@ async def upload_buffer(
         ) as response:
             response.raise_for_status()
 
-            # Safe the value of the current offset on the server side, at the beginning
+            # Safe the value of the current offset on the server-side, at the beginning
             # of this loop are checks to see if it is valid.
             current_server_offset = _parse_positive_integer_header(
                 response.headers, "Upload-Offset"

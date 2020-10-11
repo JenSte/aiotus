@@ -32,7 +32,7 @@
   </a>
 </div>
 
-``aiotus`` implements the client side of the [tus](https://tus.io) protocol.
+``aiotus`` implements the client-side of the [tus](https://tus.io) protocol.
 
 ## Features
 

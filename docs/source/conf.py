@@ -44,6 +44,9 @@ exclude_patterns = []
 html_static_path = ['_static']
 html_theme = 'alabaster'
 html_theme_options = {
-    'description': 'Asynchronous client side implementation of the tus protocol for Python.',
+    'description': 'Asynchronous client-side implementation of the tus protocol for Python.',
+    'sidebar_collapse': False,
+    'page_width': '80%',
+    'body_max_width': '80%',
 }
 templates_path = ['_templates']

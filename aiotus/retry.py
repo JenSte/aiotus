@@ -1,3 +1,7 @@
+"""
+High-level functions that do retrying in case of communication errors.
+"""
+
 import asyncio
 import dataclasses
 from types import TracebackType
@@ -124,6 +128,9 @@ async def upload(
 ) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 
+    This function creates an upload on the server and then uploads
+    the data to that location.
+
     In case of a communication error, this function retries the upload.
 
     :param endpoint: The creation endpoint of the server.
@@ -192,7 +199,7 @@ async def metadata(
     config: RetryConfiguration = RetryConfiguration(),
     headers: Optional[Mapping[str, str]] = None,
 ) -> Optional[common.Metadata]:
-    """Retrieve the metadata of an upload.
+    """Read back the metadata of an upload.
 
     In case of a communication error, this function retries.
 
@@ -266,7 +273,7 @@ async def upload_multiple(
     parallel_uploads: int = 3,
 ) -> Optional[yarl.URL]:
     """Upload multiple files and then use the "concatenation" protocol extension
-    to combine the parts on the server side.
+    to combine the parts on the server-side.
 
     :param endpoint: The creation endpoint of the server.
     :param files: The files to upload.

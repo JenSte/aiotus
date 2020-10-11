@@ -183,7 +183,7 @@ class TestUploadBuffer:
         assert tus_server["data"] == memory_file.getbuffer()
 
     async def test_server_offset(self, tus_server, memory_file):
-        """Test if the upload routine honors the offset value at the server side."""
+        """Test if the upload routine honors the offset value at the server-side."""
 
         tus_server["data"] = bytearray()
 

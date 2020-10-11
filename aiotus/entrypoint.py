@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import asyncio
 import logging
@@ -10,6 +8,11 @@ import aiotus
 
 
 def aiotus_upload() -> int:
+    """Entry point for the 'aiotus-upload' tool.
+
+    :return: Exit status for the program.
+    """
+
     parser = argparse.ArgumentParser(
         description="Tool to upload a file to a tus (tus.io) server.",
         epilog="This program is part of the aiotus python package.",
@@ -55,6 +58,11 @@ def aiotus_upload() -> int:
 
 
 def aiotus_metadata() -> int:
+    """Entry point for the 'aiotus-metadata' tool.
+
+    :return: Exit status for the program.
+    """
+
     parser = argparse.ArgumentParser(
         description="Tool to query the metadata of a file on a tus (tus.io) server.",
         epilog="This program is part of the aiotus python package.",

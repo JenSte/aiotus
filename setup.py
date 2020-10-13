@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="aiotus",
-    version="0.1.7",
+    version="0.1.8",
     author="Jens Steinhauser",
     author_email="jens.steinhauser@gmail.com",
     description="Asynchronous tus (tus.io) client library",

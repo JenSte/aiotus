@@ -125,6 +125,7 @@ async def upload(
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
     headers: Optional[Mapping[str, str]] = None,
+    chunksize: int = 4 * 1024 * 1024,
 ) -> Optional[yarl.URL]:
     """Upload a file to a tus server.
 
@@ -139,6 +140,7 @@ async def upload(
     :param client_session: An aiohttp ClientSession to use.
     :param config: Settings to customize the retry behaviour.
     :param headers: Optional headers used in the request.
+    :param chunksize: The size of individual chunks to upload at a time.
     :return: The location where the file was uploaded to (if the upload succeeded).
     """
 
@@ -177,6 +179,7 @@ async def upload(
                 location,
                 file,
                 ssl=config.ssl,
+                chunksize=chunksize,
                 headers=headers,
             )
 
@@ -245,9 +248,10 @@ async def _upload_partial(
     semaphore: asyncio.Semaphore,
     endpoint: Union[str, yarl.URL],
     file: BinaryIO,
-    client_session: Optional[aiohttp.ClientSession] = None,
-    config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Mapping[str, str]] = None,
+    client_session: Optional[aiohttp.ClientSession],
+    config: RetryConfiguration,
+    headers: Optional[Mapping[str, str]],
+    chunksize: int,
 ) -> str:
     """Helper function for "upload_multiple() to upload a single part."""
 
@@ -255,7 +259,9 @@ async def _upload_partial(
     tus_headers["Upload-Concat"] = "partial"
 
     async with semaphore:
-        url = await upload(endpoint, file, None, client_session, config, tus_headers)
+        url = await upload(
+            endpoint, file, None, client_session, config, tus_headers, chunksize
+        )
 
     if url is None:
         raise RuntimeError("Unable to upload part.")
@@ -270,6 +276,7 @@ async def upload_multiple(
     client_session: Optional[aiohttp.ClientSession] = None,
     config: RetryConfiguration = RetryConfiguration(),
     headers: Optional[Mapping[str, str]] = None,
+    chunksize: int = 4 * 1024 * 1024,
     parallel_uploads: int = 3,
 ) -> Optional[yarl.URL]:
     """Upload multiple files and then use the "concatenation" protocol extension
@@ -281,6 +288,7 @@ async def upload_multiple(
     :param client_session: An aiohttp ClientSession to use.
     :param config: Settings to customize the retry behaviour.
     :param headers: Optional headers used in the request.
+    :param chunksize: The size of individual chunks to upload at a time.
     :param parallel_upload: The number of parallel uploads to do concurrently.
     :return: The location of the final (concatenated) file on the server.
     """
@@ -321,7 +329,9 @@ async def upload_multiple(
             semaphore = asyncio.Semaphore(parallel_uploads)
 
             coros = [
-                _upload_partial(semaphore, endpoint, f, session, config, headers)
+                _upload_partial(
+                    semaphore, endpoint, f, session, config, headers, chunksize
+                )
                 for f in files
             ]
             tasks = [asyncio.create_task(c) for c in coros]

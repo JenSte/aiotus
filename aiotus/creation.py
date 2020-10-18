@@ -78,12 +78,15 @@ async def create(
 
     logger.debug("Creating upload...")
     async with await session.post(url, headers=tus_headers, ssl=ssl) as response:
+        response.raise_for_status()
         if response.status != 201:
             raise common.ProtocolError(
                 f"Wrong status code {response.status}, expected 201."
             )
 
         if "Location" not in response.headers:
-            raise RuntimeError('Upload created, but no "Location" header in response.')
+            raise common.ProtocolError(
+                'Upload created, but no "Location" header in response.'
+            )
 
         return yarl.URL(response.headers["Location"])

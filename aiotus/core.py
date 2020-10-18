@@ -85,7 +85,7 @@ async def offset(
         response.raise_for_status()
 
         if "Upload-Offset" not in response.headers:
-            raise RuntimeError(
+            raise common.ProtocolError(
                 f"HEAD request succeeded for {location}, "
                 'but no "Upload-Offset" header in response.'
             )

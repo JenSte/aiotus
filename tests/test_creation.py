@@ -31,20 +31,28 @@ class TestCreate:
     async def test_create_wrong_status(self, aiohttp_server, memory_file):
         """Check if status code is checked correctly."""
 
-        async def handler_wrong_status(request):
-            raise aiohttp.web.HTTPBadRequest()
+        async def handler_status_200(request):
+            return aiohttp.web.Response(status=200)
+
+        async def handler_status_400(request):
+            return aiohttp.web.Response(status=400)
 
         app = aiohttp.web.Application()
-        app.router.add_route("POST", "/wrong_status", handler_wrong_status)
+        app.router.add_route("POST", "/status_200", handler_status_200)
+        app.router.add_route("POST", "/status_400", handler_status_400)
         server = await aiohttp_server(app)
 
         with pytest.raises(aiotus.ProtocolError) as excinfo:
-            endpoint = server.make_url("/wrong_status")
-
+            endpoint = server.make_url("/status_200")
             async with aiohttp.ClientSession() as session:
                 await aiotus.creation.create(session, endpoint, memory_file, {})
-
         assert "Wrong status code" in str(excinfo.value)
+
+        with pytest.raises(aiohttp.ClientResponseError) as excinfo:
+            endpoint = server.make_url("/status_400")
+            async with aiohttp.ClientSession() as session:
+                await aiotus.creation.create(session, endpoint, memory_file, {})
+        assert excinfo.value.status == 400
 
     async def test_create_no_location(self, aiohttp_server, memory_file):
         """Check if the check for the "Location" header is working."""
@@ -56,7 +64,7 @@ class TestCreate:
         app.router.add_route("POST", "/no_location", handler_no_location)
         server = await aiohttp_server(app)
 
-        with pytest.raises(RuntimeError) as excinfo:
+        with pytest.raises(aiotus.ProtocolError) as excinfo:
             endpoint = server.make_url("/no_location")
 
             async with aiohttp.ClientSession() as session:

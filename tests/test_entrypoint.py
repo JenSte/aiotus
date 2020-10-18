@@ -10,10 +10,13 @@ import aiotus.entrypoint
 
 class TestAiotusClients:
     def test_aiotus_clients(self, tusd):
-        with unittest.mock.patch(
-            "sys.argv", ["aiotus-upload", "--debug", str(tusd.url) + "x", __file__]
-        ):
-            assert 1 == aiotus.entrypoint.aiotus_upload()
+        conf = aiotus.RetryConfiguration(1, 0.001, None)
+        defaults = (None, None, conf, None, 4 * 1024 * 1024)
+        with unittest.mock.patch.object(aiotus.upload, "__defaults__", defaults):
+            with unittest.mock.patch(
+                "sys.argv", ["aiotus-upload", "--debug", str(tusd.url) + "x", __file__]
+            ):
+                assert 1 == aiotus.entrypoint.aiotus_upload()
 
         with unittest.mock.patch(
             "sys.argv", ["aiotus-upload", str(tusd.url), __file__ + "x"]

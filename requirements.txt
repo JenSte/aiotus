@@ -1,2 +1,2 @@
-aiohttp==3.6.3
+aiohttp==3.7.0
 tenacity==6.1.0

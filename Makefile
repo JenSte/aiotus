@@ -70,9 +70,16 @@ tests/nginx.key tests/selfsigned.crt:
 	openssl req \
 	    -new -x509 -nodes\
 	    -days 3650 \
-	    -subj '/CN=localhost' \
+	    -subj '/' \
+	    -addext 'subjectAltName = IP:127.0.0.1' \
 	    -keyout tests/nginx.key \
 	    -out tests/selfsigned.crt
+
+show-certificate: tests/selfsigned.crt
+	@openssl x509 \
+	    -text \
+	    -in $< \
+	    -noout
 
 clean:
 	@rm -f \
@@ -102,5 +109,6 @@ veryclean: clean
 	flake8-check \
 	isort-check \
 	mypy-check \
+	show-certificate \
 	test \
 	veryclean

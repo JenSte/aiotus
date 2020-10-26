@@ -71,7 +71,7 @@ tests/nginx.key tests/selfsigned.crt:
 	    -new -x509 -nodes\
 	    -days 3650 \
 	    -subj '/' \
-	    -addext 'subjectAltName = IP:127.0.0.1' \
+	    -addext 'subjectAltName = DNS:localhost' \
 	    -keyout tests/nginx.key \
 	    -out tests/selfsigned.crt
 

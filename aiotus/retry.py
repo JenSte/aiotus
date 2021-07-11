@@ -166,28 +166,30 @@ async def upload(
             ctx = asyncnullcontext(client_session)
 
         async with ctx as session:
-            location: yarl.URL
-            location = await retrying_create(
-                creation.create,
-                session,
-                url,
-                file,
-                metadata,
-                ssl=config.ssl,
-                headers=headers,
-            )
+            async for attempt in retrying_create:
+                with attempt:
+                    location = await creation.create(
+                        session,
+                        url,
+                        file,
+                        metadata,
+                        ssl=config.ssl,
+                        headers=headers,
+                    )
+
             if not location.is_absolute():
                 location = url / location.path
 
-            await retrying_upload_file(
-                core.upload_buffer,
-                session,
-                location,
-                file,
-                ssl=config.ssl,
-                chunksize=chunksize,
-                headers=headers,
-            )
+            async for attempt in retrying_upload_file:
+                with attempt:
+                    await core.upload_buffer(
+                        session,
+                        location,
+                        file,
+                        ssl=config.ssl,
+                        chunksize=chunksize,
+                        headers=headers,
+                    )
 
             return location
     except asyncio.CancelledError:  # pragma: no cover
@@ -237,11 +239,11 @@ async def metadata(
 
         async with ctx as session:
             md: common.Metadata
-            md = await retrying_metadata(
-                core.metadata, session, url, ssl=config.ssl, headers=headers
-            )
-
-            return md
+            async for attempt in retrying_metadata:
+                with attempt:
+                    return await core.metadata(
+                        session, url, ssl=config.ssl, headers=headers
+                    )
     except asyncio.CancelledError:  # pragma: no cover
         raise
     except tenacity.RetryError as e:
@@ -323,9 +325,11 @@ async def upload_multiple(
             #
             # Check if the server supports the "concatenation" extension.
             #
-            server_config = await retrying_config(
-                core.configuration, session, url, ssl=config.ssl, headers=headers
-            )
+            async for attempt in retrying_config:
+                with attempt:
+                    server_config = await core.configuration(
+                        session, url, ssl=config.ssl, headers=headers
+                    )
 
             if "concatenation" not in server_config.protocol_extensions:
                 raise RuntimeError(
@@ -367,18 +371,16 @@ async def upload_multiple(
             final_headers = dict(headers or {})
             final_headers.update({"Upload-Concat": concat_header})
 
-            location: yarl.URL
-            location = await retrying_create(
-                creation.create,
-                session,
-                url,
-                None,
-                metadata,
-                ssl=config.ssl,
-                headers=final_headers,
-            )
-
-            return location
+            async for attempt in retrying_create:
+                with attempt:
+                    return await creation.create(
+                        session,
+                        url,
+                        None,
+                        metadata,
+                        ssl=config.ssl,
+                        headers=final_headers,
+                    )
     except asyncio.CancelledError:  # pragma: no cover
         raise
     except tenacity.RetryError as e:

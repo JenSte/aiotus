@@ -18,7 +18,7 @@ from typing import (
 )
 
 import aiohttp
-import tenacity  # type: ignore
+import tenacity
 import yarl
 
 from . import common, core, creation
@@ -106,13 +106,17 @@ def _make_log_before_sleep_function(
     return log
 
 
-def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying:
+def _make_retrying(
+    s: str, config: RetryConfiguration
+) -> tenacity.AsyncRetrying:  # type: ignore
     """Create a tenacity retry object."""
 
-    return tenacity.AsyncRetrying(
-        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
-        stop=tenacity.stop_after_attempt(config.retry_attempts),
-        wait=tenacity.wait_exponential(max=config.max_retry_period_seconds),
+    return tenacity.AsyncRetrying(  # type: ignore
+        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),  # type: ignore
+        stop=tenacity.stop_after_attempt(config.retry_attempts),  # type: ignore
+        wait=tenacity.wait_exponential(  # type: ignore
+            max=config.max_retry_period_seconds
+        ),
         before=_make_log_before_function(s),
         before_sleep=_make_log_before_sleep_function(s),
     )
@@ -163,7 +167,7 @@ async def upload(
 
         async with ctx as session:
             location: yarl.URL
-            location = await retrying_create.call(
+            location = await retrying_create(
                 creation.create,
                 session,
                 url,
@@ -175,7 +179,7 @@ async def upload(
             if not location.is_absolute():
                 location = url / location.path
 
-            await retrying_upload_file.call(
+            await retrying_upload_file(
                 core.upload_buffer,
                 session,
                 location,
@@ -233,7 +237,7 @@ async def metadata(
 
         async with ctx as session:
             md: common.Metadata
-            md = await retrying_metadata.call(
+            md = await retrying_metadata(
                 core.metadata, session, url, ssl=config.ssl, headers=headers
             )
 
@@ -319,7 +323,7 @@ async def upload_multiple(
             #
             # Check if the server supports the "concatenation" extension.
             #
-            server_config = await retrying_config.call(
+            server_config = await retrying_config(
                 core.configuration, session, url, ssl=config.ssl, headers=headers
             )
 
@@ -364,7 +368,7 @@ async def upload_multiple(
             final_headers.update({"Upload-Concat": concat_header})
 
             location: yarl.URL
-            location = await retrying_create.call(
+            location = await retrying_create(
                 creation.create,
                 session,
                 url,

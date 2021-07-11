@@ -276,7 +276,7 @@ class TestTenacity:
 
         with caplog.at_level(logging.INFO, logger="aiotus"):
             with pytest.raises(tenacity.RetryError):
-                await rt.call(TestTenacity.raise_runtime_error)
+                await rt(TestTenacity.raise_runtime_error)
 
             lg = caplog.record_tuples
             assert len(lg) == 4
@@ -295,7 +295,7 @@ class TestTenacity:
 
         with caplog.at_level(logging.INFO, logger="aiotus"):
             with pytest.raises(tenacity.RetryError):
-                await rt.call(TestTenacity.return_none)
+                await rt(TestTenacity.return_none)
 
             lg = caplog.record_tuples
             assert len(lg) == 2

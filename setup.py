@@ -36,7 +36,7 @@ setuptools.setup(
         "Typing :: Typed",
     ],
     python_requires=">=3.7",
-    install_requires=["aiohttp", "tenacity"],
+    install_requires=["aiohttp", "tenacity>=6.2.0"],
     setup_requires=["setuptools_scm"],
     use_scm_version={"local_scheme": "dirty-tag"},
 )

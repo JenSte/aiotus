@@ -1,2 +1,2 @@
 aiohttp==3.7.4.post0
-tenacity==8.0.0
+tenacity==8.0.1

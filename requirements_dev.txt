@@ -9,7 +9,7 @@ coverage==5.5
 darglint==1.8.0
 flake8==3.9.2
 grip==4.5.2
-isort==5.9.2
+isort==5.9.3
 mypy==0.910
 pep8-naming==0.12.0
 pytest-aiohttp==0.3.0

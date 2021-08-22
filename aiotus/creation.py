@@ -4,6 +4,8 @@ Implementation of the
 to the tus protocol.
 """
 
+from __future__ import annotations
+
 import asyncio
 import base64
 import io

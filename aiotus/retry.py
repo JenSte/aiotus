@@ -2,6 +2,8 @@
 High-level functions that do retrying in case of communication errors.
 """
 
+from __future__ import annotations
+
 import asyncio
 import dataclasses
 from types import TracebackType

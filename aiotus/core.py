@@ -3,6 +3,8 @@ Implementation of the
 `core tus protocol <https://tus.io/protocols/resumable-upload.html#core-protocol>`_.
 """
 
+from __future__ import annotations
+
 import asyncio
 import base64
 import dataclasses

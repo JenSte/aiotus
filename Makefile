@@ -48,6 +48,11 @@ coverage_html/index.html: .coverage
 doc:
 	make -C docs clean html
 
+tox:
+	unset PYTHONPATH && \
+	    export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring && \
+	    tox
+
 venv:
 	python3 -m venv venv
 	. venv/bin/activate; \
@@ -87,6 +92,7 @@ clean:
 	@rm -rf \
 	    .mypy_cache \
 	    .pytest_cache \
+	    .tox \
 	    .xprocess \
 	    aiotus.egg-info \
 	    build \

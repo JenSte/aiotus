@@ -67,7 +67,7 @@ def _parse_positive_integer_header(
 async def offset(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    ssl: common.SSLArgument = None,
+    ssl: Optional[common.SSLArgument] = None,
     headers: Optional[Mapping[str, str]] = None,
 ) -> int:
     """Get the number of uploaded bytes.
@@ -119,10 +119,13 @@ def _parse_metadata(header: str) -> common.Metadata:
 async def metadata(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    ssl: common.SSLArgument = None,
+    ssl: Optional[common.SSLArgument] = None,
     headers: Optional[Mapping[str, str]] = None,
 ) -> common.Metadata:
     """Get the metadata associated with an upload.
+
+    See :data:`aiotus.Metadata` for details on how metadata is handled in the
+    tus protocol.
 
     :param session: HTTP session to use for connections.
     :param location: The upload endpoint to query.
@@ -156,7 +159,7 @@ async def upload_buffer(
     session: aiohttp.ClientSession,
     location: yarl.URL,
     buffer: BinaryIO,
-    ssl: common.SSLArgument = None,
+    ssl: Optional[common.SSLArgument] = None,
     chunksize: int = 4 * 1024 * 1024,
     headers: Optional[Mapping[str, str]] = None,
 ) -> None:
@@ -237,7 +240,7 @@ async def upload_buffer(
 async def configuration(
     session: aiohttp.ClientSession,
     url: yarl.URL,
-    ssl: common.SSLArgument = None,
+    ssl: Optional[common.SSLArgument] = None,
     headers: Optional[Mapping[str, str]] = None,
 ) -> ServerConfiguration:
     """Get the server's configuration.

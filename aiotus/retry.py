@@ -64,7 +64,7 @@ class RetryConfiguration:
     but the time between retries is caped by this value.
     """
 
-    ssl: common.SSLArgument = None
+    ssl: Optional[common.SSLArgument] = None
     """
     'ssl' argument passed on to the aiohttp calls.
 
@@ -213,6 +213,9 @@ async def metadata(
     headers: Optional[Mapping[str, str]] = None,
 ) -> Optional[common.Metadata]:
     """Read back the metadata of an upload.
+
+    See :data:`aiotus.Metadata` for details on how metadata is handled in the
+    tus protocol.
 
     In case of a communication error, this function retries.
 

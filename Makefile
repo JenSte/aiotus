@@ -55,7 +55,7 @@ venv:
 	    pip3 install -r requirements_dev.txt; \
 	    pip3 install -e .
 
-TUSD_VERSION = v1.4.0
+TUSD_VERSION = v1.6.0
 TUSD_ARCH = amd64
 TUSD_ARCHIVE = tusd_linux_${TUSD_ARCH}.tar.gz
 

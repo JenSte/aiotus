@@ -1,6 +1,7 @@
 .coverage
 .eggs/
 .mypy_cache/
+.tox/
 .xprocess/
 aiotus.egg-info/
 build/

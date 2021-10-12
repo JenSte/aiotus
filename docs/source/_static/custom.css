@@ -1,3 +1,7 @@
 div.section > dl:not(:last-child) {
     margin-bottom: 20px;
 }
+
+section[id^='module-'] > dl.py {
+    margin-top: 20px;
+}

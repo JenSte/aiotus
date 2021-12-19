@@ -166,6 +166,7 @@ def tusd(pytestconfig, xprocess):
     class Starter(ProcessStarter):
         pattern = "You can now upload files to:"
         args = [executable, "-host", host, "-port", port, "-base-path", basepath]
+        terminate_on_interrupt = True
 
     server_name = "tusd-server"
 
@@ -243,6 +244,7 @@ def nginx_proxy(xprocess, tusd):
         class Starter(ProcessStarter):
             pattern = "could not open error log file"
             args = ["nginx", "-p", d, "-c", "nginx.conf"]
+            terminate_on_interrupt = True
 
         server_name = "nginx-server"
 

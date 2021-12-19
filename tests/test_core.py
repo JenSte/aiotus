@@ -47,7 +47,9 @@ class TestOffset:
             async with aiohttp.ClientSession() as session:
                 await aiotus.core.offset(session, location)
 
-        assert 'no "Upload-Offset" header' in str(excinfo.value)
+        assert 'HTTP header "Upload-Offset" not included in server response.' == str(
+            excinfo.value
+        )
 
         # Check if the offset value is checked properly.
         with pytest.raises(aiotus.ProtocolError) as excinfo:

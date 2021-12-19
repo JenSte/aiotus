@@ -243,7 +243,6 @@ async def metadata(
             ctx = asyncnullcontext(client_session)
 
         async with ctx as session:
-            md: common.Metadata
             async for attempt in retrying_metadata:
                 with attempt:
                     return await core.metadata(

@@ -48,8 +48,14 @@ def _parse_positive_integer_header(
     Raises a ProtocolError if the conversion is not posible.
     """
 
+    if header_name not in headers:
+        raise common.ProtocolError(
+            f'HTTP header "{header_name}" not included in server response.'
+        )
+
+    header_value = headers[header_name]
+
     try:
-        header_value = headers[header_name]
         result = int(header_value)
         if result < 0:
             raise RuntimeError()
@@ -77,7 +83,6 @@ async def offset(
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param headers: Optional headers used in the request.
     :return: The number of bytes that are already on the server.
-    :raises ProtocolError: When the server does not comply to the tus protocol.
     """
 
     tus_headers = dict(headers or {})
@@ -86,12 +91,6 @@ async def offset(
     logger.debug(f'Getting offset of "{location}"...')
     async with await session.head(location, headers=tus_headers, ssl=ssl) as response:
         response.raise_for_status()
-
-        if "Upload-Offset" not in response.headers:
-            raise common.ProtocolError(
-                f"HEAD request succeeded for {location}, "
-                'but no "Upload-Offset" header in response.'
-            )
 
         return _parse_positive_integer_header(response.headers, "Upload-Offset")
 

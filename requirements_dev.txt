@@ -10,7 +10,7 @@ darglint==1.8.0
 flake8==4.0.1
 grip==4.5.2
 isort==5.10.1
-mypy==0.920
+mypy==0.921
 pep8-naming==0.12.1
 pytest-aiohttp==0.3.0
 pytest-cov==3.0.0

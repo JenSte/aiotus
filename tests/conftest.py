@@ -6,12 +6,12 @@ import tempfile
 from typing import Optional
 
 import aiohttp
-import pytest  # type: ignore
+import pytest_asyncio
 import yarl
 from xprocess import ProcessStarter  # type: ignore
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def tus_server(aiohttp_server):
     """Return a fake tus server that can consume a single file."""
 
@@ -116,7 +116,7 @@ async def tus_server(aiohttp_server):
     return state
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 def memory_file():
     """Dummy data to use during tests."""
     return io.BytesIO(b"\x00\x01\x02\x03")
@@ -135,7 +135,7 @@ class EOFBytesIO:
         return b""
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 def eof_memory_file(memory_file):
     return EOFBytesIO(memory_file)
 
@@ -150,7 +150,7 @@ class TusServer:
     certificate: Optional[str] = None
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module")
 def tusd(pytestconfig, xprocess):
     """Start the tusd (tus.io reference implementation) and yield the upload URL.
 
@@ -223,7 +223,7 @@ _nginx_conf = """
 """
 
 
-@pytest.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module")
 def nginx_proxy(xprocess, tusd):
     """Start an nginx proxy in front of tusd that does TLS termination."""
 

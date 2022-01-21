@@ -12,7 +12,7 @@ grip==4.5.2
 isort==5.10.1
 mypy==0.931
 pep8-naming==0.12.1
-pytest-aiohttp==1.0.2
+pytest-aiohttp==1.0.3
 pytest-cov==3.0.0
 pytest-xprocess==0.18.1
 pytest==6.2.5

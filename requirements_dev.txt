@@ -8,7 +8,7 @@ codecov==2.1.12
 coverage==6.3.1
 darglint==1.8.0
 flake8==4.0.1
-grip==4.5.2
+grip==4.6.0
 isort==5.10.1
 mypy==0.931
 pep8-naming==0.12.1

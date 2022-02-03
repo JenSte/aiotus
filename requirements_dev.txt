@@ -19,5 +19,5 @@ pytest==6.2.5
 sphinx-autodoc-typehints==1.16.0
 
 setuptools
-twine==3.7.1
+twine==3.8.0
 wheel

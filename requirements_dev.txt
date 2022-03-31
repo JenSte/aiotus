@@ -19,5 +19,5 @@ pytest==7.1.1
 sphinx-autodoc-typehints==1.17.0; python_version>"3.7"
 
 setuptools
-twine==3.8.0
+twine==4.0.0
 wheel

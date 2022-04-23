@@ -29,11 +29,18 @@ class TestRetry:
         assert tus_server["metadata"] == "Content-Type aW1hZ2UvanBlZw==,key"
         assert tus_server["data"] is not None
         assert tus_server["data"] == memory_file.getbuffer()
+
         assert tus_server["post_headers"] is not None
         assert "h1" in tus_server["post_headers"]
         assert tus_server["post_headers"]["h1"] == "v1"
         assert "h2" in tus_server["post_headers"]
         assert tus_server["post_headers"]["h2"] == "v2"
+
+        assert tus_server["head_headers"] is not None
+        assert "h1" in tus_server["head_headers"]
+        assert tus_server["head_headers"]["h1"] == "v1"
+        assert "h2" in tus_server["head_headers"]
+        assert tus_server["head_headers"]["h2"] == "v2"
 
     async def test_upload_client_session(self, tus_server, memory_file):
         """Use a custom client session."""

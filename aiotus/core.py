@@ -183,7 +183,7 @@ async def upload_buffer(
 
     # We ask the server for the number of bytes it already has for the upload. This
     # makes it possible to use this function also for resuming aborted uploads.
-    current_server_offset = await offset(session, location, ssl=ssl)
+    current_server_offset = await offset(session, location, ssl=ssl, headers=headers)
 
     logger.debug(
         f'Resuming upload of "{location}" at offset {current_server_offset}..."'

@@ -1,6 +1,6 @@
 -r requirements.txt
 
-Sphinx==5.1.0; python_version>"3.7"
+Sphinx==5.1.1; python_version>"3.7"
 bandit==1.7.4
 black==22.6.0
 bump2version==1.0.1

@@ -16,7 +16,7 @@ pytest-aiohttp==1.0.4
 pytest-cov==3.0.0
 pytest-xprocess==0.19.0
 pytest==7.1.2
-sphinx-autodoc-typehints==1.19.1; python_version>"3.7"
+sphinx-autodoc-typehints==1.19.2; python_version>"3.7"
 
 setuptools
 twine==4.0.1

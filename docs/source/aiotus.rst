@@ -8,12 +8,12 @@ aiotus module
 .. automodule:: aiotus
    :members:
 
-.. data:: aiotus.SSLArgument
+.. data:: SSLArgument
    :value: Union[bool, ssl.SSLContext, aiohttp.Fingerprint]
 
    Alias for the type of the 'ssl' argument passed to aiohttp calls.
 
-.. data:: aiotus.Metadata
+.. data:: Metadata
    :value: Mapping[str, Optional[bytes]]
 
    Alias for the type used to hold metadata of an upload.

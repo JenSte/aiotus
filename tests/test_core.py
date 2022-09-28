@@ -121,7 +121,7 @@ class TestMetadata:
 
         with pytest.raises(binascii.Error) as excinfo:
             aiotus.core._parse_metadata("k1 dj&=")
-        assert "Non-base64" in str(excinfo.value)
+        assert any(s in str(excinfo.value) for s in ("Non-base64", "Only base64"))
 
         with pytest.raises(ValueError) as excinfo:
             aiotus.core._parse_metadata("k v v")

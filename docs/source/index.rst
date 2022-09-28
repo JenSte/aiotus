@@ -46,6 +46,7 @@ This documentation was generated for ``aiotus`` version |release|.
 
 .. toctree::
    :hidden:
+   :maxdepth: 3
 
    Introduction<self>
    usage

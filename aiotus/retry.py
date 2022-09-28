@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import dataclasses
+import sys
 from types import TracebackType
 from typing import (
     AsyncContextManager,
@@ -28,23 +29,27 @@ from .log import logger
 
 T = TypeVar("T")
 
+if sys.version_info >= (3, 10):
+    # 'contextlib.nullcontext' supports async beginning with Python 3.10.
+    from contextlib import nullcontext as asyncnullcontext
+else:
 
-class asyncnullcontext(AsyncContextManager[T]):  # noqa: N801
-    """Asynchronous version of 'contextlib.nullcontext'."""
+    class asyncnullcontext(AsyncContextManager[T]):  # noqa: N801
+        """Asynchronous version of 'contextlib.nullcontext'."""
 
-    def __init__(self, aenter_result: T) -> None:
-        self._aenter_result = aenter_result
+        def __init__(self, aenter_result: T) -> None:
+            self._aenter_result = aenter_result
 
-    async def __aenter__(self) -> T:
-        return self._aenter_result
+        async def __aenter__(self) -> T:
+            return self._aenter_result
 
-    async def __aexit__(
-        self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
-    ) -> None:
-        return None
+        async def __aexit__(
+            self,
+            exc_type: Optional[Type[BaseException]],
+            exc_value: Optional[BaseException],
+            traceback: Optional[TracebackType],
+        ) -> None:
+            return None
 
 
 @dataclasses.dataclass

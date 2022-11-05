@@ -26,9 +26,12 @@ class TestTLS:
         async with aiohttp.ClientSession() as session:
             with pytest.raises(aiohttp.ClientConnectorCertificateError) as excinfo:
                 await aiotus.creation.create(session, nginx_proxy.url, memory_file, {})
-            assert "certificate verify failed: self signed certificate" in str(
-                excinfo.value
-            )
+
+            messages = [
+                "certificate verify failed: self signed certificate",
+                "certificate verify failed: self-signed certificate",
+            ]
+            assert any(m in str(excinfo.value) for m in messages)
 
         # The retrying upload function returns 'None', as the upload fails.
         config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)

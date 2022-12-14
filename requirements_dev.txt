@@ -10,7 +10,7 @@ darglint==1.8.0
 flake8==5.0.4; python_version=="3.7"
 flake8==6.0.0; python_version>"3.7"
 grip==4.6.1
-isort==5.11.1
+isort==5.11.2
 mypy==0.991
 pep8-naming==0.13.2
 pytest-aiohttp==1.0.4

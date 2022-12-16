@@ -16,7 +16,7 @@
 </div>
 <div align="center">
   <a href="https://github.com/JenSte/aiotus/actions">
-    <img alt="CI Status" src="https://img.shields.io/github/workflow/status/JenSte/aiotus/Continuous Integration?style=flat-square">
+    <img alt="CI Status" src="https://img.shields.io/github/actions/workflow/status/JenSte/aiotus/ci.yml?branch=master&style=flat-square">
   </a>
   <a href="https://codecov.io/gh/JenSte/aiotus">
     <img alt="Code Coverage" src="https://img.shields.io/codecov/c/github/JenSte/aiotus?style=flat-square">

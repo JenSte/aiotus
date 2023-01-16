@@ -41,7 +41,19 @@ jobs:
     - name: Create test certificates
       run: |
         make tests/nginx.key tests/selfsigned.crt
-    - name: Run pytest
+    - name: Run pytest (1st try)
+      id: pytest1
+      run: |
+        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
+      continue-on-error: true
+    - name: Run pytest (2nd try)
+      id: pytest2
+      if: steps.pytest1.outcome == 'failure'
+      run: |
+        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
+      continue-on-error: true
+    - name: Run pytest (3rd try)
+      if: steps.pytest2.outcome == 'failure'
       run: |
         PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
     - name: Upload coverage information

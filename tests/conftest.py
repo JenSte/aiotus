@@ -142,7 +142,6 @@ def eof_memory_file(memory_file):
 
 @dataclasses.dataclass
 class TusServer:
-
     # The URL where the server is listening on.
     url: yarl.URL
 

@@ -72,7 +72,6 @@ class TestOffset:
         """Test the normal functionality of the '_offset' function."""
 
         async def handler(request):
-
             assert "Tus-Resumable" in request.headers
             assert (
                 request.headers["Tus-Resumable"] == aiotus.common.TUS_PROTOCOL_VERSION

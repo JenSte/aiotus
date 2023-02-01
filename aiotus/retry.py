@@ -84,7 +84,6 @@ def _make_log_before_function(s: str) -> Callable[[tenacity.RetryCallState], Non
     """Create a function used to log before a retry attempt."""
 
     def log(retry_state: tenacity.RetryCallState) -> None:
-
         if retry_state.attempt_number > 1:
             logger.info(
                 f"Trying {s} again, attempt number {retry_state.attempt_number}..."

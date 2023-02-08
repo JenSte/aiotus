@@ -228,10 +228,7 @@ async def metadata(
     .. # noqa: DAR401 asyncio.CancelledError
     """
 
-    if isinstance(endpoint, str):
-        url = yarl.URL(endpoint)
-    else:
-        url = endpoint
+    url = yarl.URL(endpoint)
 
     retrying_metadata = _make_retrying("query metadata", config)
 

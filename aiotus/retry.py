@@ -162,8 +162,6 @@ async def upload(
     :param headers: Optional headers used in the request.
     :param chunksize: The size of individual chunks to upload at a time.
     :return: The location where the file was uploaded to (if the upload succeeded).
-
-    .. # noqa: DAR401 asyncio.CancelledError
     """
 
     url = yarl.URL(endpoint)
@@ -206,8 +204,6 @@ async def upload(
                     )
 
             return location
-    except asyncio.CancelledError:  # pragma: no cover
-        raise
     except tenacity.RetryError as e:
         logger.error(
             f"Unable to upload file, even after retrying: {e.last_attempt.exception()}"
@@ -236,8 +232,6 @@ async def metadata(
     :param config: Settings to customize the retry behaviour.
     :param headers: Optional headers used in the request.
     :return: The metadata associated with the upload.
-
-    .. # noqa: DAR401 asyncio.CancelledError
     """
 
     url = yarl.URL(endpoint)
@@ -257,8 +251,6 @@ async def metadata(
                     return await core.metadata(
                         session, url, ssl=config.ssl, headers=headers
                     )
-    except asyncio.CancelledError:  # pragma: no cover
-        raise
     except tenacity.RetryError as e:
         logger.error(
             f"Unable to get metadata, even after retrying: {e.last_attempt.exception()}"
@@ -315,8 +307,6 @@ async def upload_multiple(
     :param parallel_uploads: The number of parallel uploads to do concurrently.
     :return: The location of the final (concatenated) file on the server.
     :raises RuntimeError: If the server does not support the "concatenation" extension.
-
-    .. # noqa: DAR401 asyncio.CancelledError
     """
 
     url = yarl.URL(endpoint)
@@ -364,8 +354,6 @@ async def upload_multiple(
 
             try:
                 paths = await asyncio.gather(*tasks)
-            except asyncio.CancelledError:  # pragma: no cover
-                raise
             except Exception as e:
                 logger.info("Cancelling other uploads...")
                 for t in tasks:
@@ -392,8 +380,6 @@ async def upload_multiple(
                         ssl=config.ssl,
                         headers=final_headers,
                     )
-    except asyncio.CancelledError:  # pragma: no cover
-        raise
     except tenacity.RetryError as e:
         logger.error(
             f"Unable to upload files, even after retrying: {e.last_attempt.exception()}"

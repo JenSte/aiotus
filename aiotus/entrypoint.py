@@ -36,8 +36,7 @@ def aiotus_upload() -> int:
 
     metadata = {"filename": os.path.basename(args.file).encode()}
 
-    mime_type, _ = mimetypes.guess_type(args.file)
-    if mime_type:
+    if mime_type := mimetypes.guess_type(args.file)[0]:
         metadata["mime_type"] = mime_type.encode()
 
     if args.metadata:
@@ -47,8 +46,7 @@ def aiotus_upload() -> int:
 
     try:
         with open(args.file, "rb") as file:
-            location = asyncio.run(aiotus.upload(args.endpoint, file, metadata))
-            if location:
+            if location := asyncio.run(aiotus.upload(args.endpoint, file, metadata)):
                 print(str(location))
                 return 0
     except KeyboardInterrupt:  # pragma: no cover

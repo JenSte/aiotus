@@ -86,8 +86,7 @@ async def create(
         total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
         tus_headers["Upload-Length"] = str(total_size)
 
-    metadata_header = encode_metadata(metadata)
-    if metadata_header:
+    if metadata_header := encode_metadata(metadata):
         tus_headers["Upload-Metadata"] = metadata_header
 
     logger.debug("Creating upload...")

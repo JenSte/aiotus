@@ -56,8 +56,7 @@ def _parse_positive_integer_header(
     header_value = headers[header_name]
 
     try:
-        result = int(header_value)
-        if result < 0:
+        if (result := int(header_value)) < 0:
             raise RuntimeError()
 
         return result
@@ -96,8 +95,7 @@ async def offset(
 def _parse_metadata(header: str) -> common.Metadata:
     """Split and decode the input into a metadata dictionary."""
 
-    header = header.strip()
-    if not header:
+    if not (header := header.strip()):
         return {}
 
     md: Dict[str, Optional[bytes]] = {}
@@ -200,8 +198,7 @@ async def upload_buffer(
                 None, buffer.seek, current_read_offset, io.SEEK_SET
             )
 
-        chunk = await loop.run_in_executor(None, buffer.read, chunksize)
-        if not chunk:
+        if not (chunk := await loop.run_in_executor(None, buffer.read, chunksize)):
             # If the checks above are correct, we should never get here.
             raise RuntimeError("Buffer returned unexpected EOF.")
 

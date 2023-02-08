@@ -26,7 +26,6 @@ setuptools.setup(
     },
     classifiers=[
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -37,7 +36,7 @@ setuptools.setup(
         "Topic :: Internet :: WWW/HTTP",
         "Typing :: Typed",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=["aiohttp", "tenacity>=6.2.0"],
     setup_requires=["setuptools_scm"],
     use_scm_version={"local_scheme": "dirty-tag"},

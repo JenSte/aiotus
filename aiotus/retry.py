@@ -112,17 +112,13 @@ def _make_log_before_sleep_function(
     return log
 
 
-def _make_retrying(
-    s: str, config: RetryConfiguration
-) -> tenacity.AsyncRetrying:  # type: ignore
+def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying:
     """Create a tenacity retry object."""
 
-    return tenacity.AsyncRetrying(  # type: ignore
-        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),  # type: ignore
-        stop=tenacity.stop_after_attempt(config.retry_attempts),  # type: ignore
-        wait=tenacity.wait_exponential(  # type: ignore
-            max=config.max_retry_period_seconds
-        ),
+    return tenacity.AsyncRetrying(
+        retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
+        stop=tenacity.stop_after_attempt(config.retry_attempts),
+        wait=tenacity.wait_exponential(max=config.max_retry_period_seconds),
         before=_make_log_before_function(s),
         before_sleep=_make_log_before_sleep_function(s),
     )

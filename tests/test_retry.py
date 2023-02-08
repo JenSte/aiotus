@@ -75,13 +75,17 @@ class TestRetry:
     async def test_upload_wrong_metadata(self, tus_server, memory_file):
         """Test if wrong metadata is rejected."""
 
-        metadata = {"²": "2".encode()}
+        with pytest.raises(TypeError) as excinfo:
+            await aiotus.upload(tus_server["create_endpoint"], memory_file, {"k": "v"})
 
-        location = await aiotus.upload(
-            tus_server["create_endpoint"], memory_file, metadata
-        )
+        assert "bytes-like object is required" in str(excinfo.value)
 
-        assert location is None
+        with pytest.raises(ValueError) as excinfo:
+            await aiotus.upload(
+                tus_server["create_endpoint"], memory_file, {"²": "2".encode()}
+            )
+
+        assert "ASCII characters" in str(excinfo.value)
 
     async def test_retry(self, tus_server, memory_file):
         """Test the retry functionality."""

@@ -124,6 +124,20 @@ def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying
     )
 
 
+def _sanitize_metadata(metadata: Optional[common.Metadata]) -> common.Metadata:
+    """Make sure the given optional metadata object is valid."""
+
+    if metadata is None:
+        metadata = {}
+
+    # Try to encode the metadata once here, as this function is called outside
+    # of any code that does retries, so that invalid arguments are caught early
+    # and the exception is not swallowed.
+    creation.encode_metadata(metadata)
+
+    return metadata
+
+
 async def upload(
     endpoint: Union[str, yarl.URL],
     file: BinaryIO,
@@ -153,9 +167,7 @@ async def upload(
     """
 
     url = yarl.URL(endpoint)
-
-    if metadata is None:
-        metadata = {}
+    metadata = _sanitize_metadata(metadata)
 
     retrying_create = _make_retrying("upload creation", config)
     retrying_upload_file = _make_retrying("upload", config)
@@ -308,9 +320,7 @@ async def upload_multiple(
     """
 
     url = yarl.URL(endpoint)
-
-    if metadata is None:
-        metadata = {}
+    metadata = _sanitize_metadata(metadata)
 
     retrying_config = _make_retrying("query configuration", config)
     retrying_create = _make_retrying("upload creation", config)

@@ -35,6 +35,27 @@ def _check_metadata_keys(metadata: common.Metadata) -> None:
             raise ValueError("Metadata keys must not contain commas.")
 
 
+def encode_metadata(metadata: common.Metadata) -> str:
+    """Encode the metadata to the value of the metadata header.
+
+    :param metadata: The metadata to encode.
+    :return: The value for the "Upload-Metadata" header.
+    """
+
+    _check_metadata_keys(metadata)
+
+    def encode_value(value: Optional[bytes]) -> str:
+        if value is None:
+            return ""
+
+        encoded_bytes = base64.b64encode(value)
+        encoded_string = encoded_bytes.decode()
+        return " " + encoded_string
+
+    pairs = [f"{k}{encode_value(v)}" for k, v in metadata.items()]
+    return ",".join(pairs)
+
+
 async def create(
     session: aiohttp.ClientSession,
     url: yarl.URL,
@@ -65,19 +86,9 @@ async def create(
         total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
         tus_headers["Upload-Length"] = str(total_size)
 
-    if metadata:
-        _check_metadata_keys(metadata)
-
-        def encode_value(value: Optional[bytes]) -> str:
-            if value is None:
-                return ""
-
-            encoded_bytes = base64.b64encode(value)
-            encoded_string = encoded_bytes.decode()
-            return " " + encoded_string
-
-        pairs = [f"{k}{encode_value(v)}" for k, v in metadata.items()]
-        tus_headers["Upload-Metadata"] = ",".join(pairs)
+    metadata_header = encode_metadata(metadata)
+    if metadata_header:
+        tus_headers["Upload-Metadata"] = metadata_header
 
     logger.debug("Creating upload...")
     async with await session.post(url, headers=tus_headers, ssl=ssl) as response:

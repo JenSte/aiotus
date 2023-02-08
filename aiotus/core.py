@@ -61,8 +61,6 @@ def _parse_positive_integer_header(
             raise RuntimeError()
 
         return result
-    except asyncio.CancelledError:  # pragma: no cover
-        raise
     except Exception:
         raise common.ProtocolError(
             f'Unable to convert "{header_name}" header '
@@ -132,8 +130,6 @@ async def metadata(
     :param headers: Optional headers used in the request.
     :return: The metadata of the upload.
     :raises ProtocolError: When the server does not comply to the tus protocol.
-
-    .. # noqa: DAR401 asyncio.CancelledError
     """
 
     tus_headers = dict(headers or {})
@@ -148,8 +144,6 @@ async def metadata(
 
         try:
             return _parse_metadata(response.headers["Upload-Metadata"])
-        except asyncio.CancelledError:  # pragma: no cover
-            raise
         except Exception as e:
             raise common.ProtocolError(f"Unable to parse metadata: {e}")
 

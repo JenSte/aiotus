@@ -57,7 +57,7 @@ jobs:
       run: |
         PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
     - name: Upload coverage information
-      uses: codecov/codecov-action@v1.0.12
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
     - name: Generate documentation

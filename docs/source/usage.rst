@@ -96,19 +96,19 @@ with a logger called ``"aiotus"``.
 Command-Line
 ============
 
-The ``aiotus`` package installs two command-line tools that can be used to upload
+The ``aiotus`` package can be called directly from the command-line to upload
 files to a tus server and to show the metadata associated with an upload:
 
 .. code-block::
 
-   $ aiotus-upload --metadata additional=metadata http://example.com/files image.jpeg
+   $ python3 -m aiotus upload --metadata additional=metadata http://example.com/files image.jpeg
    INFO:aiotus:Complete buffer uploaded.
    http://example.com/files/abcd...
 
-   $ aiotus-metadata http://example.com/files/abcd...
+   $ python3 -m aiotus metadata http://example.com/files/abcd...
    mime_type: image/jpeg
    additional: metadata
    filename: image.jpeg
 
-In addition, these tools can serve as additional examples on how to use ``aiotus``.
+In addition, these commands can serve as additional examples on how to use ``aiotus``.
 Their implementation can be found in the :py:mod:`aiotus.entrypoint` module.

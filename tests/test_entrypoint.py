@@ -14,20 +14,18 @@ class TestAiotusClients:
         defaults = (None, None, conf, None, 4 * 1024 * 1024)
         with unittest.mock.patch.object(aiotus.upload, "__defaults__", defaults):
             with unittest.mock.patch(
-                "sys.argv", ["aiotus-upload", "--debug", str(tusd.url) + "x", __file__]
+                "sys.argv", ["", "--debug", "upload", str(tusd.url) + "x", __file__]
             ):
-                assert 1 == aiotus.entrypoint.aiotus_upload()
+                assert 1 == aiotus.entrypoint.main()
 
         with unittest.mock.patch(
-            "sys.argv", ["aiotus-upload", str(tusd.url), __file__ + "x"]
+            "sys.argv", ["", "upload", str(tusd.url), __file__ + "x"]
         ):
-            assert 1 == aiotus.entrypoint.aiotus_upload()
+            assert 1 == aiotus.entrypoint.main()
 
-        with unittest.mock.patch(
-            "sys.argv", ["aiotus-upload", str(tusd.url), __file__]
-        ):
+        with unittest.mock.patch("sys.argv", ["", "upload", str(tusd.url), __file__]):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
-                assert 0 == aiotus.entrypoint.aiotus_upload()
+                assert 0 == aiotus.entrypoint.main()
                 url = sys.stdout.getvalue().strip()
 
         expected_output = [
@@ -35,18 +33,18 @@ class TestAiotusClients:
             "mime_type: text/x-python",
         ]
 
-        with unittest.mock.patch("sys.argv", ["aiotus-metadata", url]):
+        with unittest.mock.patch("sys.argv", ["", "metadata", url]):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
-                assert 0 == aiotus.entrypoint.aiotus_metadata()
+                assert 0 == aiotus.entrypoint.main()
 
                 lines = sys.stdout.getvalue().splitlines(False)
                 lines.sort()
 
                 assert lines == expected_output
 
-        with unittest.mock.patch("sys.argv", ["aiotus-metadata", "--debug", url]):
+        with unittest.mock.patch("sys.argv", ["", "--debug", "metadata", url]):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
-                assert 0 == aiotus.entrypoint.aiotus_metadata()
+                assert 0 == aiotus.entrypoint.main()
 
                 lines = sys.stdout.getvalue().splitlines(False)
                 lines.sort()
@@ -57,7 +55,8 @@ class TestAiotusClients:
         with unittest.mock.patch(
             "sys.argv",
             [
-                "aiotus-upload",
+                "",
+                "upload",
                 "--metadata",
                 "key1=value1",
                 "--metadata",
@@ -67,12 +66,12 @@ class TestAiotusClients:
             ],
         ):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
-                assert 0 == aiotus.entrypoint.aiotus_upload()
+                assert 0 == aiotus.entrypoint.main()
                 url = sys.stdout.getvalue().strip()
 
-        with unittest.mock.patch("sys.argv", ["aiotus-metadata", url]):
+        with unittest.mock.patch("sys.argv", ["", "metadata", url]):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
-                assert 0 == aiotus.entrypoint.aiotus_metadata()
+                assert 0 == aiotus.entrypoint.main()
 
                 lines = sys.stdout.getvalue().splitlines(False)
                 assert "key1: value1" in lines

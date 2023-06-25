@@ -16,19 +16,19 @@ black-check:
 	@black \
 	    --check \
 	    --diff \
-	    aiotus tests setup.py
+	    aiotus tests
 
 flake8-check:
 	@echo Running flake8...
 	@flake8 \
-	    aiotus tests setup.py
+	    aiotus tests
 
 isort-check:
 	@echo Running isort...
 	@isort \
 	    --check-only \
 	    --diff \
-	    aiotus tests setup.py
+	    aiotus tests
 
 mypy-check:
 	@echo Running mypy...

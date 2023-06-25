@@ -9,17 +9,17 @@ sys.path.insert(0, aiotus_path)
 
 
 def get_version():
-    """Return package version from setup.py (hacky)."""
+    """Return package version from the bumpversion configuration file (hacky)."""
 
     try:
-        filename = os.path.join(os.path.dirname(__file__), '../..', 'setup.py')
+        filename = os.path.join(os.path.dirname(__file__), '../../.bumpversion.cfg')
         with open(filename, 'r') as fd:
             setup_py = fd.read()
 
-        m = re.search(r'version="(\d+\.\d+\.\d+)"', setup_py)
+        m = re.search(r'current_version\s*=\s*(\d+\.\d+\.\d+)', setup_py)
         return m.group(1)
     except:
-        sys.exit('Unable to get package version from setup.py.')
+        sys.exit('Unable to get package version from configuration file.')
 
 
 project = 'aiotus'

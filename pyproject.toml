@@ -1,0 +1,59 @@
+[project]
+name = "aiotus"
+# The version is provided by 'setuptools_scm', that creates a version
+# string from the last tag and the number of commits since then. This
+# is used so that uploads to test.pypi.org have unique version strings.
+dynamic = ["version"]
+authors = [
+    {name="Jens Steinhauser", email="jens.steinhauser@gmail.com"},
+]
+description = "Asynchronous tus (tus.io) client library"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Typing :: Typed",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "aiohttp",
+    "tenacity>=6.2.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/JenSte/aiotus"
+"Documentation" = "https://aiotus.readthedocs.io"
+
+[tool.setuptools]
+packages = ["aiotus"]
+
+[tool.setuptools.package-data]
+aiotus = ["py.typed"]
+
+[build-system]
+requires = [
+    "setuptools_scm[toml]",
+]
+
+[tool.coverage.run]
+branch = true
+
+[tool.isort]
+include_trailing_comma = true
+multi_line_output = 3
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+filterwarnings = "ignore::DeprecationWarning:aiohttp.*:"
+
+[tool.setuptools_scm]
+local_scheme = "dirty-tag"

@@ -189,8 +189,10 @@ async def upload(
                         headers=headers,
                     )
 
+            logger.debug(f"Upload created, upload URL is '{location}'.")
             if not location.is_absolute():
                 location = url / location.path
+                logger.debug(f"Upload URL was relative, changed to '{location}'.")
 
             async for attempt in retrying_upload_file:
                 with attempt:

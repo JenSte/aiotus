@@ -46,7 +46,8 @@ def _metadata(args: argparse.Namespace) -> int:
 
     try:
         metadata = asyncio.run(retry.metadata(args.location))
-        assert isinstance(metadata, dict)  # nosec - Silence mypy.
+        # Silence mypy, it does not detect the type 'asyncio.run()' returns.
+        assert isinstance(metadata, dict)  # nosec B101
 
         for k, v in metadata.items():
             if v is None:

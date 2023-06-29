@@ -5,6 +5,11 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/aiotus
+    permissions:
+      id-token: write
     steps:
     - uses: actions/checkout@v1.2.0
     - name: Set up Python 3.8
@@ -25,6 +30,3 @@ jobs:
         path: dist/
     - name: Publish to PyPi
       uses: pypa/gh-action-pypi-publish@v1.8.7
-      with:
-        user: __token__
-        password: ${{ secrets.pypi_token }}

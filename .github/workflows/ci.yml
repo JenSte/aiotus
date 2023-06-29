@@ -86,7 +86,7 @@ jobs:
         path: dist/
     - name: Publish to TestPyPi
       if: (github.ref == 'refs/heads/master') || (github.event_name == 'release' && github.event.action == 'created')
-      uses: pypa/gh-action-pypi-publish@v1.3.1
+      uses: pypa/gh-action-pypi-publish@v1.8.7
       with:
         user: __token__
         password: ${{ secrets.test_pypi_token }}

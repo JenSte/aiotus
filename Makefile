@@ -45,6 +45,13 @@ coverage_html/index.html: .coverage
 	@coverage html -d coverage_html
 	@echo Coverage report ready at $$(realpath $@)
 
+pyupgrade:
+	@echo Running pyupgrade...
+	pyupgrade \
+	    --py38-plus \
+	    --keep-runtime-typing \
+	    aiotus/*.py
+
 doc:
 	make -C docs clean html
 
@@ -111,6 +118,7 @@ veryclean: clean
 .PHONY: \
 	black \
 	clean \
+	pyupgrade \
 	doc \
 	flake8-check \
 	isort-check \

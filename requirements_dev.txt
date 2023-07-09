@@ -15,6 +15,7 @@ pytest-aiohttp==1.0.4
 pytest-cov==4.1.0
 pytest-xprocess==0.22.2
 pytest==7.4.0
+pyupgrade==3.9.0
 sphinx-autodoc-typehints==1.23.4
 
 build==0.10.0

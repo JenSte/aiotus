@@ -60,7 +60,7 @@ with open("image.jpeg", "rb") as f:
     # 'location' is the URL where the file was uploaded to.
 
 # Read back the metadata from the server.
-metadata = aiotus.metadata(location)
+metadata = await aiotus.metadata(location)
 ```
 
 ## Requirements

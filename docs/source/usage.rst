@@ -29,7 +29,7 @@ with the server:
 
    if location:
        # Read back the metadata from the server.
-       metadata = aiotus.metadata(location)
+       metadata = await aiotus.metadata(location)
 
 The retry behaviour can be customized by passing an instance of
 :py:class:`aiotus.RetryConfiguration`.

@@ -1,6 +1,4 @@
-"""
-High-level functions that do retrying in case of communication errors.
-"""
+"""High-level functions that do retrying in case of communication errors."""
 
 from __future__ import annotations
 
@@ -37,13 +35,13 @@ else:
     class asyncnullcontext(AsyncContextManager[T]):  # noqa: N801
         """Asynchronous version of 'contextlib.nullcontext'."""
 
-        def __init__(self, aenter_result: T) -> None:
+        def __init__(self, aenter_result: T) -> None:  # noqa: D107
             self._aenter_result = aenter_result
 
-        async def __aenter__(self) -> T:
+        async def __aenter__(self) -> T:  # noqa: D105
             return self._aenter_result
 
-        async def __aexit__(
+        async def __aexit__(  # noqa: D105
             self,
             exc_type: Optional[Type[BaseException]],
             exc_value: Optional[BaseException],
@@ -114,7 +112,6 @@ def _make_log_before_sleep_function(
 
 def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying:
     """Create a tenacity retry object."""
-
     return tenacity.AsyncRetrying(
         retry=tenacity.retry_if_exception_type(aiohttp.ClientError),
         stop=tenacity.stop_after_attempt(config.retry_attempts),
@@ -126,7 +123,6 @@ def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying
 
 def _sanitize_metadata(metadata: Optional[common.Metadata]) -> common.Metadata:
     """Make sure the given optional metadata object is valid."""
-
     if metadata is None:
         metadata = {}
 
@@ -163,7 +159,6 @@ async def upload(
     :param chunksize: The size of individual chunks to upload at a time.
     :return: The location where the file was uploaded to (if the upload succeeded).
     """
-
     url = yarl.URL(endpoint)
     metadata = _sanitize_metadata(metadata)
 
@@ -235,7 +230,6 @@ async def metadata(
     :param headers: Optional headers used in the request.
     :return: The metadata associated with the upload.
     """
-
     url = yarl.URL(endpoint)
 
     retrying_metadata = _make_retrying("query metadata", config)
@@ -270,8 +264,10 @@ async def _upload_partial(
     headers: Optional[Mapping[str, str]],
     chunksize: int,
 ) -> str:
-    """Helper function for "upload_multiple() to upload a single part."""
+    """Upload a single part of an upload with the "concatenation" extension.
 
+    Helper function for 'upload_multiple()'.
+    """
     tus_headers = dict(headers or {})
     tus_headers["Upload-Concat"] = "partial"
 
@@ -296,7 +292,9 @@ async def upload_multiple(
     chunksize: int = 4 * 1024 * 1024,
     parallel_uploads: int = 3,
 ) -> Optional[yarl.URL]:
-    """Upload multiple files and then use the "concatenation" protocol extension
+    """Upload multiple files using the "concatenation" extension.
+
+    Upload multiple files and then use the "concatenation" protocol extension
     to combine the parts on the server-side.
 
     :param endpoint: The creation endpoint of the server.
@@ -310,7 +308,6 @@ async def upload_multiple(
     :return: The location of the final (concatenated) file on the server.
     :raises RuntimeError: If the server does not support the "concatenation" extension.
     """
-
     url = yarl.URL(endpoint)
     metadata = _sanitize_metadata(metadata)
 

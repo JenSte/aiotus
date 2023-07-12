@@ -1,3 +1,5 @@
+"""Common constants and classes used in the aiotus package."""
+
 from __future__ import annotations
 
 import ssl

@@ -1,7 +1,8 @@
-"""
-Implementation of the
+"""Implementation of the creation extension.
+
+The
 `creation extension <https://tus.io/protocols/resumable-upload.html#creation>`_
-to the tus protocol.
+defines how to reserve space on the server for uploading data to.
 """
 
 from __future__ import annotations
@@ -23,7 +24,6 @@ def _check_metadata_keys(metadata: common.Metadata) -> None:
 
     Raises a 'ValueError' exception if a key is invalid.
     """
-
     for k in metadata:
         if not k.isascii():
             raise ValueError("Metadata keys must only contain ASCII characters.")
@@ -41,7 +41,6 @@ def encode_metadata(metadata: common.Metadata) -> str:
     :param metadata: The metadata to encode.
     :return: The value for the "Upload-Metadata" header.
     """
-
     _check_metadata_keys(metadata)
 
     def encode_value(value: Optional[bytes]) -> str:
@@ -77,7 +76,6 @@ async def create(
     :return: The URL to upload the data to.
     :raises ProtocolError: When the server does not comply to the tus protocol.
     """
-
     tus_headers = dict(headers or {})
     tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 

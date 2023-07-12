@@ -1,6 +1,8 @@
-"""
-Implementation of the
-`core tus protocol <https://tus.io/protocols/resumable-upload.html#core-protocol>`_.
+"""Implementation of the core protocol.
+
+The
+`core tus protocol <https://tus.io/protocols/resumable-upload.html#core-protocol>`_
+defines how the data upload is handled.
 """
 
 from __future__ import annotations
@@ -47,7 +49,6 @@ def _parse_positive_integer_header(
 
     Raises a ProtocolError if the conversion is not posible.
     """
-
     if header_name not in headers:
         raise common.ProtocolError(
             f'HTTP header "{header_name}" not included in server response.'
@@ -81,7 +82,6 @@ async def offset(
     :param headers: Optional headers used in the request.
     :return: The number of bytes that are already on the server.
     """
-
     tus_headers = dict(headers or {})
     tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
@@ -94,7 +94,6 @@ async def offset(
 
 def _parse_metadata(header: str) -> common.Metadata:
     """Split and decode the input into a metadata dictionary."""
-
     if not (header := header.strip()):
         return {}
 
@@ -129,7 +128,6 @@ async def metadata(
     :return: The metadata of the upload.
     :raises ProtocolError: When the server does not comply to the tus protocol.
     """
-
     tus_headers = dict(headers or {})
     tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
@@ -165,7 +163,6 @@ async def upload_buffer(
     :raises ProtocolError: When the server does not comply to the tus protocol.
     :raises RuntimeError: When reading of the file fails.
     """
-
     loop = asyncio.get_event_loop()
 
     total_size = await loop.run_in_executor(None, buffer.seek, 0, io.SEEK_END)
@@ -242,7 +239,6 @@ async def configuration(
     :return: An object describing the server's configuration.
     :raises ProtocolError: When the server does not comply to the tus protocol.
     """
-
     logger.debug("Querying server configuration...")
     async with await session.options(url, headers=headers, ssl=ssl) as response:
         response.raise_for_status()

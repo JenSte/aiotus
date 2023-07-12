@@ -1,6 +1,4 @@
-"""
-Top-level module containing convenience functions.
-"""
+"""Top-level module containing convenience functions."""
 
 from __future__ import annotations
 

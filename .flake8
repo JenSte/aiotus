@@ -6,4 +6,4 @@ max-line-length = 88
 show-source = True
 statistics = True
 per-file-ignores =
-    tests/*: DAR
+    tests/*: DAR D

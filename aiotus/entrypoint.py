@@ -1,3 +1,5 @@
+"""Defines the commands for executing the module directly."""
+
 from __future__ import annotations
 
 import argparse
@@ -11,11 +13,10 @@ from . import retry
 
 
 def _upload(args: argparse.Namespace) -> int:
-    """Implementation of the "upload" command.
+    """Implement the "upload" command.
 
     :return: Exit status for the program.
     """
-
     metadata = {"filename": os.path.basename(args.file).encode()}
 
     if mime_type := mimetypes.guess_type(args.file)[0]:
@@ -39,11 +40,10 @@ def _upload(args: argparse.Namespace) -> int:
 
 
 def _metadata(args: argparse.Namespace) -> int:
-    """Implementation of the "metadata" command.
+    """Implement the "metadata" command.
 
     :return: Exit status for the program.
     """
-
     try:
         metadata = asyncio.run(retry.metadata(args.location))
         # Silence mypy, it does not detect the type 'asyncio.run()' returns.
@@ -66,7 +66,6 @@ def main() -> int:
 
     :return: Exit status for the program.
     """
-
     if sys.executable:
         interpreter = os.path.basename(sys.executable)
     else:

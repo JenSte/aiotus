@@ -64,7 +64,7 @@ venv:
 	python3 -m venv venv
 	. venv/bin/activate; \
 	    pip3 install --upgrade pip; \
-	    pip3 install -r requirements_dev.txt; \
+	    pip3 install -r requirements.txt; \
 	    pip3 install -e .
 
 TUSD_VERSION = v1.11.0

@@ -6,4 +6,10 @@ max-line-length = 88
 show-source = True
 statistics = True
 per-file-ignores =
-    tests/*: DAR D
+    tests/*: D
+
+# pydoclint
+style = sphinx
+allow-init-docstring = True
+arg-type-hints-in-docstring = False
+check-return-types = False

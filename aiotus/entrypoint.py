@@ -15,7 +15,7 @@ from . import retry
 def _upload(args: argparse.Namespace) -> int:
     """Implement the "upload" command.
 
-    :return: Exit status for the program.
+    Returns the exit status for the program.
     """
     metadata = {"filename": os.path.basename(args.file).encode()}
 
@@ -42,7 +42,7 @@ def _upload(args: argparse.Namespace) -> int:
 def _metadata(args: argparse.Namespace) -> int:
     """Implement the "metadata" command.
 
-    :return: Exit status for the program.
+    Returns the exit status for the program.
     """
     try:
         metadata = asyncio.run(retry.metadata(args.location))

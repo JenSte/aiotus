@@ -59,6 +59,7 @@ tox:
 	unset PYTHONPATH && \
 	    export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring && \
 	    tox
+	coverage combine .coverage.*
 
 venv:
 	python3 -m venv venv
@@ -95,7 +96,7 @@ show-certificate: tests/selfsigned.crt
 
 clean:
 	@rm -f \
-	    .coverage
+	    .coverage*
 	@rm -rf \
 	    .mypy_cache \
 	    .pytest_cache \

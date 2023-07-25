@@ -2,6 +2,7 @@ import os
 import re
 import sys
 
+import aiohttp
 
 aiotus_path = os.path.join(os.path.dirname(__file__), '../..')
 aiotus_path = os.path.abspath(aiotus_path)
@@ -39,6 +40,13 @@ intersphinx_mapping = {
     'aiohttp': ('https://aiohttp.readthedocs.io/en/stable/', None),
     'yarl': ('https://yarl.readthedocs.io/en/stable/', None),
 }
+
+# Hack around an issue with intersphinx where it looks up the linked
+# identifier in the implementation module.
+#
+# https://github.com/aio-libs/aiohttp/issues/3714#issuecomment-486973504
+aiohttp.ClientSession.__module__ = 'aiohttp'
+aiohttp.Fingerprint.__module__ = 'aiohttp'
 
 exclude_patterns = []
 html_static_path = ['_static']

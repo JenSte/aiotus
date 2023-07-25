@@ -105,7 +105,8 @@ clean:
 	    aiotus.egg-info \
 	    build \
 	    coverage_html \
-	    dist
+	    dist \
+	    docs/build
 
 veryclean: clean
 	@rm -f \

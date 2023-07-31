@@ -5,7 +5,7 @@
 aiohttp==3.8.5
 tenacity==8.2.2
 
-flake8==6.0.0
+flake8==6.1.0
 flake8-docstrings==1.7.0
 pep8-naming==0.13.3
 pydoclint==0.1.4

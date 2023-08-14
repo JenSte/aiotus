@@ -3,7 +3,7 @@
 # in the 'pyproject.toml' file.
 
 aiohttp==3.8.5
-tenacity==8.2.2
+tenacity==8.2.3
 
 flake8==6.1.0
 flake8-docstrings==1.7.0

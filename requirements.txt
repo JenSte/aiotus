@@ -21,7 +21,7 @@ pytest-aiohttp==1.0.4
 pytest-cov==4.1.0
 pytest-xprocess==0.22.2
 
-Sphinx==7.2.0; python_version>"3.8"
+Sphinx==7.2.2; python_version>"3.8"
 sphinx-autodoc-typehints==1.24.0; python_version>"3.8"
 
 bump2version==1.0.1

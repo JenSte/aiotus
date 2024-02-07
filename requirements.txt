@@ -8,7 +8,7 @@ tenacity==8.2.3
 flake8==7.0.0
 flake8-docstrings==1.7.0
 pep8-naming==0.13.3
-pydoclint==0.3.9
+pydoclint==0.3.10
 
 bandit==1.7.7
 black==24.1.1

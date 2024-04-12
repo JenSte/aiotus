@@ -2,7 +2,7 @@
 # the dependencies of the package published to PyPI are defined
 # in the 'pyproject.toml' file.
 
-aiohttp==3.9.3
+aiohttp==3.9.4
 tenacity==8.2.3
 
 flake8==7.0.0

@@ -72,7 +72,7 @@ def _parse_positive_integer_header(
 async def offset(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    ssl: Optional[common.SSLArgument] = None,
+    ssl: common.SSLArgument = True,
     headers: Optional[Mapping[str, str]] = None,
 ) -> int:
     """Get the number of uploaded bytes.
@@ -114,7 +114,7 @@ def _parse_metadata(header: str) -> common.Metadata:
 async def metadata(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    ssl: Optional[common.SSLArgument] = None,
+    ssl: common.SSLArgument = True,
     headers: Optional[Mapping[str, str]] = None,
 ) -> common.Metadata:
     """Get the metadata associated with an upload.
@@ -149,7 +149,7 @@ async def upload_buffer(
     session: aiohttp.ClientSession,
     location: yarl.URL,
     buffer: BinaryIO,
-    ssl: Optional[common.SSLArgument] = None,
+    ssl: common.SSLArgument = True,
     chunksize: int = 4 * 1024 * 1024,
     headers: Optional[Mapping[str, str]] = None,
 ) -> None:
@@ -228,7 +228,7 @@ async def upload_buffer(
 async def configuration(
     session: aiohttp.ClientSession,
     url: yarl.URL,
-    ssl: Optional[common.SSLArgument] = None,
+    ssl: common.SSLArgument = True,
     headers: Optional[Mapping[str, str]] = None,
 ) -> ServerConfiguration:
     """Get the server's configuration.

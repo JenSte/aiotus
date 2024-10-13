@@ -5,15 +5,13 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import sys
+from collections.abc import Iterable, Mapping
 from types import TracebackType
 from typing import (
     AsyncContextManager,
     BinaryIO,
     Callable,
-    Iterable,
-    Mapping,
     Optional,
-    Type,
     TypeVar,
     Union,
 )
@@ -43,7 +41,7 @@ else:
 
         async def __aexit__(  # noqa: D105
             self,
-            exc_type: Optional[Type[BaseException]],
+            exc_type: Optional[type[BaseException]],
             exc_value: Optional[BaseException],
             traceback: Optional[TracebackType],
         ) -> None:

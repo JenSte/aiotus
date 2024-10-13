@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import ssl
-from typing import Final, Mapping, Optional, Union
+from collections.abc import Mapping
+from typing import Final, Optional, Union
 
 import aiohttp
 

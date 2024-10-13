@@ -53,6 +53,7 @@ multi_line_output = 3
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = "ignore::DeprecationWarning:aiohttp.*:"
 
 [tool.setuptools_scm]

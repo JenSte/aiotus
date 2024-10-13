@@ -11,7 +11,8 @@ import asyncio
 import base64
 import dataclasses
 import io
-from typing import BinaryIO, Dict, List, Mapping, Optional
+from collections.abc import Mapping
+from typing import BinaryIO, Optional
 
 import aiohttp
 import multidict
@@ -25,7 +26,7 @@ from .log import logger
 class ServerConfiguration:
     """Class to hold the server's configuration."""
 
-    protocol_versions: List[str]
+    protocol_versions: list[str]
     """
     List of protocol versions supported by the server, sorted by the server's
     preference.
@@ -36,7 +37,7 @@ class ServerConfiguration:
     The maximum allowed file size (in bytes), if reported by the server.
     """
 
-    protocol_extensions: List[str]
+    protocol_extensions: list[str]
     """
     The protocol extensions supported by the server.
     """
@@ -97,7 +98,7 @@ def _parse_metadata(header: str) -> common.Metadata:
     if not (header := header.strip()):
         return {}
 
-    md: Dict[str, Optional[bytes]] = {}
+    md: dict[str, Optional[bytes]] = {}
     for pair in header.split(","):
         kv = pair.split()
         if len(kv) == 1:

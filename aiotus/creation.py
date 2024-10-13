@@ -10,7 +10,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
-from typing import BinaryIO, Mapping, Optional
+from collections.abc import Mapping
+from typing import BinaryIO, Optional
 
 import aiohttp
 import yarl

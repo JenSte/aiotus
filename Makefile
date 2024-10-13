@@ -48,7 +48,7 @@ coverage_html/index.html: .coverage
 pyupgrade:
 	@echo Running pyupgrade...
 	pyupgrade \
-	    --py38-plus \
+	    --py39-plus \
 	    --keep-runtime-typing \
 	    aiotus/*.py
 

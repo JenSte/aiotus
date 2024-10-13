@@ -177,7 +177,7 @@ class TestUploadBuffer:
             # Pass a small chunksize so that we have multiple uploads even with
             # the small test file.
             await aiotus.core.upload_buffer(
-                s, tus_server["upload_endpoint"], memory_file, ssl=None, chunksize=3
+                s, tus_server["upload_endpoint"], memory_file, ssl=False, chunksize=3
             )
 
         assert tus_server["data"] is not None
@@ -193,7 +193,7 @@ class TestUploadBuffer:
 
         async with aiohttp.ClientSession() as s:
             await aiotus.core.upload_buffer(
-                s, tus_server["upload_endpoint"], memory_file, ssl=None, chunksize=3
+                s, tus_server["upload_endpoint"], memory_file, ssl=False, chunksize=3
             )
 
         assert tus_server["data"] is not None

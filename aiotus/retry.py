@@ -65,11 +65,11 @@ class RetryConfiguration:
     but the time between retries is caped by this value.
     """
 
-    ssl: Optional[common.SSLArgument] = None
+    ssl: common.SSLArgument = True
     """
     'ssl' argument passed on to the aiohttp calls.
 
-    This can be None, False, or an instance of ssl.SSLContext, see
+    This can be a boolean, or an instance of ssl.SSLContext, see
     the `aiohttp documentation
     <https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets>`_
     for the different meanings.

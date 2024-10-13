@@ -61,7 +61,7 @@ async def create(
     url: yarl.URL,
     file: Optional[BinaryIO],
     metadata: common.Metadata,
-    ssl: Optional[common.SSLArgument] = None,
+    ssl: common.SSLArgument = True,
     headers: Optional[Mapping[str, str]] = None,
 ) -> yarl.URL:
     """Create an upload.

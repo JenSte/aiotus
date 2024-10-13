@@ -127,7 +127,7 @@ async def metadata(
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param headers: Optional headers used in the request.
     :return: The metadata of the upload.
-    :raises ProtocolError: When the server does not comply to the tus protocol.
+    :raises common.ProtocolError: When the server does not comply to the tus protocol.
     """
     tus_headers = dict(headers or {})
     tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
@@ -161,7 +161,7 @@ async def upload_buffer(
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param chunksize: The size of individual chunks to upload at a time.
     :param headers: Optional headers used in the request.
-    :raises ProtocolError: When the server does not comply to the tus protocol.
+    :raises common.ProtocolError: When the server does not comply to the tus protocol.
     :raises RuntimeError: When reading of the file fails.
     """
     loop = asyncio.get_event_loop()
@@ -238,7 +238,7 @@ async def configuration(
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param headers: Optional headers used in the request.
     :return: An object describing the server's configuration.
-    :raises ProtocolError: When the server does not comply to the tus protocol.
+    :raises common.ProtocolError: When the server does not comply to the tus protocol.
     """
     logger.debug("Querying server configuration...")
     async with await session.options(url, headers=headers, ssl=ssl) as response:

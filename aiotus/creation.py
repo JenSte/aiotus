@@ -75,7 +75,7 @@ async def create(
     :param ssl: SSL validation mode, passed on to aiohttp.
     :param headers: Optional headers used in the request.
     :return: The URL to upload the data to.
-    :raises ProtocolError: When the server does not comply to the tus protocol.
+    :raises common.ProtocolError: When the server does not comply to the tus protocol.
     """
     tus_headers = dict(headers or {})
     tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION

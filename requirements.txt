@@ -13,7 +13,7 @@ pydoclint==0.5.9
 bandit==1.7.10
 black==24.10.0
 isort==5.13.2
-mypy==1.11.2
+mypy==1.12.0
 
 coverage[toml]==7.6.3
 pytest==8.3.3

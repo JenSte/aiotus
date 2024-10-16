@@ -1,6 +1,7 @@
 name: Continuous Integration
 on: [push]
 jobs:
+  # Run linters and unit tests on all supported Python versions.
   checks:
     strategy:
       matrix:
@@ -64,14 +65,10 @@ jobs:
       if: matrix.python-version > '3.9'
       run: |
         make -C docs html
+  # Package the code on the lowest supported Python version.
   package:
     needs: checks
     runs-on: ubuntu-latest
-    environment:
-      name: testpypi
-      url: https://test.pypi.org/project/aiotus
-    permissions:
-      id-token: write
     steps:
     - uses: actions/checkout@v4
       with:
@@ -90,6 +87,21 @@ jobs:
         python -m build
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
+      with:
+        name: packages
+        path: dist/
+  # Publish packages built from the master branch to TestPyPi.
+  publish-testpypi:
+    needs: package
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/aiotus
+    permissions:
+      id-token: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
       with:
         name: packages
         path: dist/

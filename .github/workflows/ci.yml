@@ -7,7 +7,7 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1.2.0
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4.6.1
       with:
@@ -73,7 +73,10 @@ jobs:
     permissions:
       id-token: write
     steps:
-    - uses: actions/checkout@v1.2.0
+    - uses: actions/checkout@v4
+      with:
+        # Get the complete history so that setuptools-scm works properly.
+        fetch-depth: 0
     - name: Set up Python 3.9
       uses: actions/setup-python@v4.6.1
       with:

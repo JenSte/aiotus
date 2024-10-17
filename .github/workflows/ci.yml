@@ -48,26 +48,52 @@ jobs:
     - name: Run pytest (1st try)
       id: pytest1
       run: |
-        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
+        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml:coverage/coverage-${{ matrix.python-version }}.xml tests
       continue-on-error: true
     - name: Run pytest (2nd try)
       id: pytest2
       if: steps.pytest1.outcome == 'failure'
       run: |
-        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
+        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml:coverage/coverage-${{ matrix.python-version }}.xml tests
       continue-on-error: true
     - name: Run pytest (3rd try)
       if: steps.pytest2.outcome == 'failure'
       run: |
-        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml tests
-    - name: Upload coverage information
-      uses: codecov/codecov-action@v4
+        PYTHONPATH=. pytest --cov=aiotus --cov-report=xml:coverage/coverage-${{ matrix.python-version }}.xml tests
+    - name: Upload coverage information artifact
+      uses: actions/upload-artifact@v4
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        name: coverage-${{ matrix.python-version }}
+        path: coverage/coverage-*.xml
     - name: Generate documentation
       if: matrix.python-version > '3.9'
       run: |
         make -C docs html
+  # Upload coverage information to external services. A separate job is used because
+  # SonarCloud does not like to be triggered multiple times for the same commit.
+  upload-coverage:
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Get the complete history so that SonarCloud can figure out what has
+        # changed on a feature branch compared to the main branch.
+        fetch-depth: 0
+    - name: Download coverage information artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: coverage-*
+        path: coverage/
+    - name: Run SonarCloud scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: Upload coverage information to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        directory: coverage/
+        token: ${{ secrets.CODECOV_TOKEN }}
   # Package the code on the lowest supported Python version.
   package:
     needs: checks

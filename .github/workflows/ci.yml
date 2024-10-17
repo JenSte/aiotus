@@ -60,13 +60,12 @@ jobs:
       if: steps.pytest2.outcome == 'failure'
       run: |
         PYTHONPATH=. pytest --cov=aiotus --cov-report=xml:.coverage-reports/coverage-${{ matrix.python-version }}.xml tests
-    - run: ls -l
-    - run: ls -l .coverage-reports
     - name: Upload coverage information artifact
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report-${{ matrix.python-version }}
-        path: .coverage-reports/*
+        path: .coverage-reports/coverage-*.xml
+        include-hidden-files: true
     #- name: Upload coverage information
     #  uses: codecov/codecov-action@v4
     #  with:

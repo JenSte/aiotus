@@ -80,6 +80,7 @@ jobs:
     needs: checks
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
     - name: Download coverage information artifacts
       uses: actions/download-artifact@v4
       with:

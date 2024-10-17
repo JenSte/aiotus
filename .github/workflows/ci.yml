@@ -70,15 +70,12 @@ jobs:
     #  uses: codecov/codecov-action@v4
     #  with:
     #    token: ${{ secrets.CODECOV_TOKEN }}
-    #- name: Run SonarCloud scan
-    #  uses: SonarSource/sonarcloud-github-action@master
-    #  env:
-    #    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - name: Generate documentation
       if: matrix.python-version > '3.9'
       run: |
         make -C docs html
-  # Upload coverage information
+  # Upload coverage information to external services. The reason for having
+  # this in a separate s
   upload-coverage:
     needs: checks
     runs-on: ubuntu-latest
@@ -89,10 +86,10 @@ jobs:
         pattern: coverage-report-*
         path: .coverage-reports/
         merge-multiple: true
-    - name: aadf
-      run: ls -l
-    - name: badf
-      run: ls -l .coverage-reports/
+    - name: Run SonarCloud scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   # Package the code on the lowest supported Python version.
   package:
     needs: checks

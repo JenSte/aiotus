@@ -85,6 +85,7 @@ jobs:
       with:
         pattern: coverage-*
         path: coverage/
+        merge-multiple: true
     - name: Run SonarCloud scan
       uses: SonarSource/sonarcloud-github-action@master
       env:

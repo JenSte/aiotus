@@ -47,6 +47,7 @@ requires = [
 
 [tool.coverage.run]
 branch = true
+relative_files = true
 
 [tool.isort]
 include_trailing_comma = true

@@ -9,6 +9,15 @@ import aiotus.entrypoint
 
 
 class TestAiotusClients:
+    def test_no_command(self):
+        with unittest.mock.patch("sys.argv", [""]):
+            with unittest.mock.patch("sys.stderr", new_callable=io.StringIO):
+                assert 1 == aiotus.entrypoint.main()
+
+                lines = sys.stderr.getvalue().splitlines(False)
+                assert len(lines) >= 0
+                assert lines[0] == "No command specified."
+
     def test_aiotus_clients(self, tusd):
         conf = aiotus.RetryConfiguration(1, 0.001, None)
         defaults = (None, None, conf, None, 4 * 1024 * 1024)

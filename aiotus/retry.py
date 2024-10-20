@@ -367,7 +367,7 @@ async def upload_multiple(
             final_headers = dict(headers or {})
             final_headers.update({"Upload-Concat": concat_header})
 
-            async for attempt in retrying_create:
+            async for attempt in retrying_create:  # pragma: no branch
                 with attempt:
                     return await creation.create(
                         session,

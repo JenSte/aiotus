@@ -69,7 +69,7 @@ def main() -> int:
     if sys.executable:
         interpreter = os.path.basename(sys.executable)
     else:
-        interpreter = "python3"
+        interpreter = "python3"  # pragma: no cover
 
     parser = argparse.ArgumentParser(prog=f"{interpreter} -m aiotus")
     parser.add_argument("--debug", action="store_true", help="log debug messages")

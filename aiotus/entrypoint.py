@@ -107,4 +107,9 @@ def main() -> int:
     else:
         logging.basicConfig(level=logging.INFO)
 
+    if not hasattr(args, "func"):
+        sys.stderr.write("No command specified.\n\n")
+        parser.print_help(file=sys.stderr)
+        return 1
+
     return args.func(args)  # type: ignore

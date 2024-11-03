@@ -74,6 +74,7 @@ jobs:
   upload-coverage:
     needs: checks
     runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
     - uses: actions/checkout@v4
       with:

@@ -1,4 +1,4 @@
-all: black-check flake8-check isort-check mypy-check bandit-check test
+all: black-check flake8-check isort-check mypy-check bandit-check zizmor-check test
 
 bandit-check:
 	@echo Running bandit...
@@ -37,6 +37,10 @@ mypy-check:
 	    aiotus
 	@mypy \
 	    tests
+
+zizmor-check:
+	@echo Running zizmor...
+	zizmor .github/workflows
 
 test .coverage: tusd tests/nginx.key tests/selfsigned.crt
 	pytest --cov=aiotus tests

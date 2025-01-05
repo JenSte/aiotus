@@ -39,6 +39,11 @@ jobs:
     - name: Run bandit
       run: |
         bandit --recursive aiotus
+    - name: Run zizmor
+      run: |
+        zizmor .github/workflows
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Download tusd
       run: |
         make tusd

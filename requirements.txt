@@ -11,7 +11,7 @@ pep8-naming==0.14.1
 pydoclint==0.6.0
 
 bandit==1.8.2
-black==24.10.0
+black==25.1.0
 isort==5.13.2
 mypy==1.14.1
 zizmor==1.1.1

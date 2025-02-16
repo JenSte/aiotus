@@ -81,8 +81,7 @@ async def create(
     tus_headers["Tus-Resumable"] = common.TUS_PROTOCOL_VERSION
 
     if file is not None:
-        loop = asyncio.get_event_loop()
-        total_size = await loop.run_in_executor(None, file.seek, 0, io.SEEK_END)
+        total_size = await asyncio.to_thread(file.seek, 0, io.SEEK_END)
         tus_headers["Upload-Length"] = str(total_size)
 
     if metadata_header := encode_metadata(metadata):

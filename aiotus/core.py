@@ -164,9 +164,7 @@ async def upload_buffer(
     :raises common.ProtocolError: When the server does not comply to the tus protocol.
     :raises RuntimeError: When reading of the file fails.
     """
-    loop = asyncio.get_event_loop()
-
-    total_size = await loop.run_in_executor(None, buffer.seek, 0, io.SEEK_END)
+    total_size = await asyncio.to_thread(buffer.seek, 0, io.SEEK_END)
 
     # The position in the file where we currently read from.
     current_read_offset = -1
@@ -192,11 +190,9 @@ async def upload_buffer(
         if current_read_offset != current_server_offset:
             # Seek to the offset that the server expects next.
             current_read_offset = current_server_offset
-            await loop.run_in_executor(
-                None, buffer.seek, current_read_offset, io.SEEK_SET
-            )
+            await asyncio.to_thread(buffer.seek, current_read_offset, io.SEEK_SET)
 
-        if not (chunk := await loop.run_in_executor(None, buffer.read, chunksize)):
+        if not (chunk := await asyncio.to_thread(buffer.read, chunksize)):
             # If the checks above are correct, we should never get here.
             raise RuntimeError("Buffer returned unexpected EOF.")
 

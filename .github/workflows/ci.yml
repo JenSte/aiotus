@@ -98,7 +98,7 @@ jobs:
         path: coverage/
         merge-multiple: true
     - name: Run SonarCloud scan
-      uses: SonarSource/sonarcloud-github-action@master
+      uses: SonarSource/sonarqube-scan-action@master
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     - name: Upload coverage information to Codecov

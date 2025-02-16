@@ -3,6 +3,8 @@ on:
   push:
   release:
     types: [published]
+permissions:
+  contents: read
 jobs:
   # Run linters and unit tests on all supported Python versions.
   checks:

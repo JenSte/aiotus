@@ -149,7 +149,7 @@ jobs:
         name: packages
         path: dist/
     - name: Publish to TestPyPi
-      uses: pypa/gh-action-pypi-publish@release/v1.10
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         repository-url: https://test.pypi.org/legacy/
   # Publish releases to PyPi.
@@ -169,4 +169,4 @@ jobs:
         name: packages
         path: dist/
     - name: Publish to PyPi
-      uses: pypa/gh-action-pypi-publish@release/v1.10
+      uses: pypa/gh-action-pypi-publish@release/v1

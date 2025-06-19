@@ -10,7 +10,7 @@ flake8-docstrings==1.7.0
 pep8-naming==0.15.1
 pydoclint==0.6.6
 
-bandit==1.8.3
+bandit==1.8.5
 black==25.1.0
 isort==6.0.1
 mypy==1.16.1

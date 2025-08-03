@@ -57,6 +57,8 @@ multi_line_output = 3
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+log_cli = 1
+log_cli_level = "INFO"
 
 [tool.setuptools_scm]
 local_scheme = "dirty-tag"

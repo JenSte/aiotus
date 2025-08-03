@@ -1,18 +1,23 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import dataclasses
 import io
+import logging
 import math
 import os.path
+import socket
 import tempfile
-from typing import Any, Generator, Mapping, Optional
+from typing import Any, AsyncGenerator, Mapping, Optional
 
 import aiohttp
 import pytest
 import pytest_aiohttp
 import pytest_asyncio
 import yarl
-from xprocess import ProcessStarter, XProcess  # type: ignore
+
+logger = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -193,30 +198,51 @@ class TusServer:
     certificate: Optional[str] = None
 
 
-@pytest.fixture(scope="module")
-def tusd(pytestconfig: pytest.Config, xprocess: XProcess) -> Generator[TusServer]:
+def random_port() -> int:
+    """Find a random port, that hopefully stays unused until it is used."""
+    with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+        s.bind(("", 0))
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        return s.getsockname()[1]  # type: ignore[no-any-return]
+
+
+@contextlib.asynccontextmanager
+async def start_process(
+    program: str, args: list[str], *, cwd: str
+) -> AsyncGenerator[None]:
+    """Start a subprocess."""
+
+    proc = await asyncio.create_subprocess_exec(program, *args, cwd=cwd)
+    logger.info(f"process {program} started")
+
+    try:
+        await asyncio.sleep(1.0)
+        yield
+    finally:
+        logger.info(f"terminating process '{program}'...")
+        proc.terminate()
+        await proc.communicate()
+        logger.info(f"process '{program}' terminated")
+
+
+@pytest_asyncio.fixture(loop_scope="module")
+async def tusd(pytestconfig: pytest.Config) -> AsyncGenerator[TusServer]:
     """Start the tusd (tus.io reference implementation) and yield the upload URL.
 
     Assumes that the tusd executable is located in the pytest rootdir.
     """
-
     host = "0.0.0.0"
-    port = "8080"
+    port = random_port()
     basepath = "/files/"
 
-    executable = pytestconfig.rootpath / "tusd"
-
-    class Starter(ProcessStarter):  # type: ignore[misc]
-        pattern = "You can now upload files to:"
-        args = [str(executable), "-host", host, "-port", port, "-base-path", basepath]
-        terminate_on_interrupt = True
-
-    server_name = "tusd-server"
-
-    xprocess.ensure(server_name, Starter)
-    server = TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
-    yield server
-    xprocess.getinfo(server_name).terminate()
+    with tempfile.TemporaryDirectory() as d:
+        async with start_process(
+            str(pytestconfig.rootpath / "tusd"),
+            ["-host", host, "-port", str(port), "-base-path", basepath],
+            cwd=d,
+        ):
+            logger.info(f"tusd started, listening on port {port}")
+            yield TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
 
 
 # Template for the nginx configuration file. Stripped-down from
@@ -249,7 +275,7 @@ _nginx_conf = """
                 proxy_pass {tusd_url};
 
                 # Disable request and response buffering
-                proxy_request_buffering  off;
+                proxy_request_buffering off;
                 proxy_buffering off;
                 proxy_http_version 1.1;
 
@@ -266,16 +292,17 @@ _nginx_conf = """
 """
 
 
-@pytest.fixture(scope="module")
-def nginx_proxy(xprocess: XProcess, tusd: TusServer) -> Generator[TusServer]:
+@pytest_asyncio.fixture(loop_scope="module")
+async def nginx_proxy(tusd: TusServer) -> AsyncGenerator[TusServer]:
     """Start an nginx proxy in front of tusd that does TLS termination."""
-
     test_dir = os.path.dirname(os.path.abspath(__file__))
     certificate = os.path.join(test_dir, "selfsigned.crt")
+    port = random_port()
+
     fmt = {
         "crt": certificate,
         "key": os.path.join(test_dir, "nginx.key"),
-        "port": 8443,
+        "port": port,
         "tusd_url": str(tusd.url),
     }
     conf = _nginx_conf.format(**fmt)
@@ -285,15 +312,9 @@ def nginx_proxy(xprocess: XProcess, tusd: TusServer) -> Generator[TusServer]:
         with open(conf_file, "w") as f:
             f.write(conf)
 
-        class Starter(ProcessStarter):  # type: ignore[misc]
-            pattern = "could not open error log file"
-            args = ["nginx", "-p", d, "-c", "nginx.conf"]
-            terminate_on_interrupt = True
-
-        server_name = "nginx-server"
-
-        xprocess.ensure(server_name, Starter)
-        server = TusServer(yarl.URL(f"https://localhost:{fmt['port']}"))
-        server.certificate = certificate
-        yield server
-        xprocess.getinfo(server_name).terminate()
+        async with start_process("nginx", ["-p", d, "-c", conf_file], cwd=d):
+            logger.info(f"nginx started, listening on port {port}")
+            yield TusServer(
+                yarl.URL(f"https://localhost:{port}"),
+                certificate,
+            )

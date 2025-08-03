@@ -34,9 +34,7 @@ mypy-check:
 	@echo Running mypy...
 	@mypy \
 	    --strict \
-	    aiotus
-	@mypy \
-	    tests
+	    aiotus tests
 
 zizmor-check:
 	@echo Running zizmor...

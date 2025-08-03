@@ -1,5 +1,7 @@
 """Test the entrypoint module."""
 
+from __future__ import annotations
+
 import io
 import os.path
 import sys
@@ -7,19 +9,23 @@ import unittest.mock
 
 import aiotus.entrypoint
 
+from . import conftest
+
 
 class TestAiotusClients:
-    def test_no_command(self):
+    def test_no_command(self) -> None:
         with unittest.mock.patch("sys.argv", [""]):
             with unittest.mock.patch("sys.stderr", new_callable=io.StringIO):
+                assert isinstance(sys.stderr, io.StringIO)
+
                 assert 1 == aiotus.entrypoint.main()
 
                 lines = sys.stderr.getvalue().splitlines(False)
                 assert len(lines) >= 0
                 assert lines[0] == "No command specified."
 
-    def test_aiotus_clients(self, tusd):
-        conf = aiotus.RetryConfiguration(1, 0.001, None)
+    def test_aiotus_clients(self, tusd: conftest.TusServer) -> None:
+        conf = aiotus.RetryConfiguration(1, 0.001, False)
         defaults = (None, None, conf, None, 4 * 1024 * 1024)
         with unittest.mock.patch.object(aiotus.upload, "__defaults__", defaults):
             with unittest.mock.patch(
@@ -34,6 +40,8 @@ class TestAiotusClients:
 
         with unittest.mock.patch("sys.argv", ["", "upload", str(tusd.url), __file__]):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
+                assert isinstance(sys.stdout, io.StringIO)
+
                 assert 0 == aiotus.entrypoint.main()
                 url = sys.stdout.getvalue().strip()
 
@@ -60,7 +68,7 @@ class TestAiotusClients:
 
                 assert lines == expected_output
 
-    def test_additional_metadata(self, tusd):
+    def test_additional_metadata(self, tusd: conftest.TusServer) -> None:
         with unittest.mock.patch(
             "sys.argv",
             [
@@ -75,6 +83,8 @@ class TestAiotusClients:
             ],
         ):
             with unittest.mock.patch("sys.stdout", new_callable=io.StringIO):
+                assert isinstance(sys.stdout, io.StringIO)
+
                 assert 0 == aiotus.entrypoint.main()
                 url = sys.stdout.getvalue().strip()
 

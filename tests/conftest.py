@@ -1,60 +1,76 @@
+from __future__ import annotations
+
 import dataclasses
 import io
 import math
 import os.path
 import tempfile
-from typing import Optional
+from typing import Any, Generator, Mapping, Optional
 
 import aiohttp
 import pytest
+import pytest_aiohttp
 import pytest_asyncio
 import yarl
-from xprocess import ProcessStarter  # type: ignore
+from xprocess import ProcessStarter, XProcess  # type: ignore
+
+
+@dataclasses.dataclass
+class MockTusServer:
+    # Number of times the respective handlers will fail.
+    retries_create: int
+    retries_options: int
+    retries_head: int
+    retries_upload: int
+
+    # URLs to create and upload.
+    create_endpoint: yarl.URL
+    upload_endpoint: yarl.URL
+
+    # The uploaded data will be accumulated here.
+    data: Optional[bytearray]
+
+    # Metadata included in the creation will be placed here.
+    metadata: Optional[str]
+
+    # Complete HTTP headers used in the last head/post request.
+    head_headers: Optional[Mapping[str, str]]
+    post_headers: Optional[Mapping[str, str]]
+
+    # Drop some bytes while uploading, but don't return an error.
+    drop_upload: bool
+
+    # The aiohttp test server object.
+    server: aiohttp.test_utils.TestServer
 
 
 @pytest_asyncio.fixture
-async def tus_server(aiohttp_server):
+async def tus_server(aiohttp_server: pytest_aiohttp.AiohttpServer) -> MockTusServer:
     """Return a fake tus server that can consume a single file."""
 
-    state = {
-        # Number of times the respective handlers will fail.
-        "retries_create": 0,
-        "retries_options": 0,
-        "retries_head": 0,
-        "retries_upload": 0,
-        # URLs to create and upload. (Filled out later.)
-        "create_endpoint": None,
-        "upload_endpoint": None,
-        # The uploaded data will be accumulated here.
-        "data": None,
-        # Metadata included in the creation will be placed here.
-        "metadata": None,
-        # Complete HTTP headers used in the last head/post request.
-        "head_headers": None,
-        "post_headers": None,
-        # Drop some bytes while uploading, but don't return an error.
-        "drop_upload": False,
-    }
+    async def handler_create(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        server: MockTusServer = request.app["state"]["server"]
 
-    async def handler_create(request):
-        state["retries_create"] -= 1
-        if state["retries_create"] > 0:
+        server.retries_create -= 1
+        if server.retries_create > 0:
             raise aiohttp.web.HTTPInternalServerError()
 
         if "Upload-Metadata" in request.headers:
-            state["metadata"] = request.headers["Upload-Metadata"]
+            server.metadata = request.headers["Upload-Metadata"]
 
-        state["post_headers"] = request.headers
+        server.post_headers = request.headers
 
         # "Create" the upload.
-        state["data"] = bytearray()
+        server.data = bytearray()
 
-        headers = {"Location": str(state["upload_endpoint"])}
+        headers = {"Location": str(server.upload_endpoint)}
         raise aiohttp.web.HTTPCreated(headers=headers)
 
-    async def handler_options(request):
-        state["retries_options"] -= 1
-        if state["retries_options"] > 0:
+    async def handler_options(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        server: MockTusServer = request.app["state"]["server"]
+
+        server.retries_options -= 1
+        if server.retries_options > 0:
             raise aiohttp.web.HTTPInternalServerError()
 
         headers = {
@@ -65,60 +81,85 @@ async def tus_server(aiohttp_server):
 
         raise aiohttp.web.HTTPNoContent(headers=headers)
 
-    async def handler_head(request):
-        state["retries_head"] -= 1
-        if state["retries_head"] > 0:
+    async def handler_head(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        server: MockTusServer = request.app["state"]["server"]
+
+        server.retries_head -= 1
+        if server.retries_head > 0:
             raise aiohttp.web.HTTPInternalServerError()
 
-        state["head_headers"] = request.headers
+        server.head_headers = request.headers
 
-        if state["data"] is None:
+        if server.data is None:
             raise aiohttp.web.HTTPNotFound()
 
-        headers = {"Upload-Offset": str(len(state["data"]))}
-        if state["metadata"] is not None:
-            headers["Upload-Metadata"] = state["metadata"]
+        headers = {"Upload-Offset": str(len(server.data))}
+        if server.metadata is not None:
+            headers["Upload-Metadata"] = server.metadata
         raise aiohttp.web.HTTPOk(headers=headers)
 
-    async def handler_upload(request):
+    async def handler_upload(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        server: MockTusServer = request.app["state"]["server"]
+
         body = await request.read()
 
-        if int(request.headers["Upload-Offset"]) != len(state["data"]):
+        if server.data is None:
+            raise aiohttp.web.HTTPUnprocessableEntity()
+
+        if int(request.headers["Upload-Offset"]) != len(server.data):
             raise aiohttp.web.HTTPConflict()
 
-        state["retries_upload"] -= 1
-        if state["retries_upload"] > 0:
+        server.retries_upload -= 1
+        if server.retries_upload > 0:
             # Pretend we did only receive half of the data before an error happend.
-            state["data"].extend(body[: len(body) // 2])
+            server.data.extend(body[: len(body) // 2])
             raise aiohttp.web.HTTPInternalServerError()
 
-        if state["drop_upload"]:
+        if server.drop_upload:
             # Simulate the situation where the server can only store a subset
             # of the data that was uploaded. (In contrast to the error that we simulate
             # above we do not return an HTTP error status code.)
             body = body[: math.ceil(len(body) / 2.0)]
 
-        state["data"].extend(body)
-        headers = {"Tus-Resumable": "1.0.0", "Upload-Offset": str(len(state["data"]))}
+        server.data.extend(body)
+        headers = {"Tus-Resumable": "1.0.0", "Upload-Offset": str(len(server.data))}
         raise aiohttp.web.HTTPNoContent(headers=headers)
 
     upload_name = "1234abcdefgh"
 
     app = aiohttp.web.Application()
+    app["state"] = {}
     app.router.add_route("POST", "/files", handler_create)
     app.router.add_route("OPTIONS", "/files", handler_options)
     app.router.add_route("HEAD", "/files/" + upload_name, handler_head)
     app.router.add_route("PATCH", "/files/" + upload_name, handler_upload)
 
-    state["server"] = await aiohttp_server(app)
-    state["create_endpoint"] = state["server"].make_url("/files")
-    state["upload_endpoint"] = state["create_endpoint"] / upload_name
+    http_server = await aiohttp_server(app)
+    create_endpoint = http_server.make_url("/files")
+    upload_endpoint = create_endpoint / upload_name
 
-    return state
+    server = MockTusServer(
+        retries_create=0,
+        retries_options=0,
+        retries_head=0,
+        retries_upload=0,
+        create_endpoint=create_endpoint,
+        upload_endpoint=upload_endpoint,
+        data=None,
+        metadata=None,
+        head_headers=None,
+        post_headers=None,
+        drop_upload=False,
+        server=http_server,
+    )
+
+    app["state"]["server"] = server
+
+    return server
 
 
 @pytest.fixture
-def memory_file():
+def memory_file() -> io.BytesIO:
     """Dummy data to use during tests."""
     return io.BytesIO(b"\x00\x01\x02\x03")
 
@@ -126,19 +167,21 @@ def memory_file():
 class EOFBytesIO:
     """A wrapper around 'io.BytesIO' that never returns data."""
 
-    def __init__(self, b):
+    def __init__(self, b: io.BytesIO) -> None:
         self._b = b
 
-    def seek(self, *args, **kwargs):
+    def seek(self, *args: Any, **kwargs: Any) -> int:
         return self._b.seek(*args, **kwargs)
 
-    def read(self, *args, **kwargs):
+    def read(self, *args: Any, **kwargs: Any) -> bytes:
         return b""
 
 
 @pytest.fixture
-def eof_memory_file(memory_file):
-    return EOFBytesIO(memory_file)
+def eof_memory_file(memory_file: io.BytesIO) -> io.BytesIO:
+    # The two functions implemented by 'BinaryIO' are the only
+    # ones aiotus uses, so the type error can be ignored.
+    return EOFBytesIO(memory_file)  # type: ignore[return-value]
 
 
 @dataclasses.dataclass
@@ -151,7 +194,7 @@ class TusServer:
 
 
 @pytest.fixture(scope="module")
-def tusd(pytestconfig, xprocess):
+def tusd(pytestconfig: pytest.Config, xprocess: XProcess) -> Generator[TusServer]:
     """Start the tusd (tus.io reference implementation) and yield the upload URL.
 
     Assumes that the tusd executable is located in the pytest rootdir.
@@ -161,11 +204,11 @@ def tusd(pytestconfig, xprocess):
     port = "8080"
     basepath = "/files/"
 
-    executable = pytestconfig.rootdir.join("/tusd")
+    executable = pytestconfig.rootpath / "tusd"
 
-    class Starter(ProcessStarter):
+    class Starter(ProcessStarter):  # type: ignore[misc]
         pattern = "You can now upload files to:"
-        args = [executable, "-host", host, "-port", port, "-base-path", basepath]
+        args = [str(executable), "-host", host, "-port", port, "-base-path", basepath]
         terminate_on_interrupt = True
 
     server_name = "tusd-server"
@@ -224,12 +267,13 @@ _nginx_conf = """
 
 
 @pytest.fixture(scope="module")
-def nginx_proxy(xprocess, tusd):
+def nginx_proxy(xprocess: XProcess, tusd: TusServer) -> Generator[TusServer]:
     """Start an nginx proxy in front of tusd that does TLS termination."""
 
     test_dir = os.path.dirname(os.path.abspath(__file__))
+    certificate = os.path.join(test_dir, "selfsigned.crt")
     fmt = {
-        "crt": os.path.join(test_dir, "selfsigned.crt"),
+        "crt": certificate,
         "key": os.path.join(test_dir, "nginx.key"),
         "port": 8443,
         "tusd_url": str(tusd.url),
@@ -241,7 +285,7 @@ def nginx_proxy(xprocess, tusd):
         with open(conf_file, "w") as f:
             f.write(conf)
 
-        class Starter(ProcessStarter):
+        class Starter(ProcessStarter):  # type: ignore[misc]
             pattern = "could not open error log file"
             args = ["nginx", "-p", d, "-c", "nginx.conf"]
             terminate_on_interrupt = True
@@ -250,6 +294,6 @@ def nginx_proxy(xprocess, tusd):
 
         xprocess.ensure(server_name, Starter)
         server = TusServer(yarl.URL(f"https://localhost:{fmt['port']}"))
-        server.certificate = fmt["crt"]
+        server.certificate = certificate
         yield server
         xprocess.getinfo(server_name).terminate()

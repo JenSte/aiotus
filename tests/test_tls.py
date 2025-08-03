@@ -1,17 +1,24 @@
 """Test uploading to a server behind a TLS proxy."""
 
+from __future__ import annotations
+
+import io
 import shutil
 import ssl
 
 import aiohttp
-import pytest  # type: ignore
+import pytest
 
 import aiotus
+
+from . import conftest
 
 
 @pytest.mark.skipif(shutil.which("nginx") is None, reason="nginx not found")
 class TestTLS:
-    async def test_upload_fail(self, nginx_proxy, memory_file):
+    async def test_upload_fail(
+        self, nginx_proxy: conftest.TusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test failed upload to a TLS server."""
 
         # Make sure we actually use encryption, access via plain
@@ -57,7 +64,9 @@ class TestTLS:
                 await aiotus.core.metadata(session, http_location)
             assert "Bad Request" in str(excinfo.value)
 
-    async def test_upload_functional(self, nginx_proxy, memory_file):
+    async def test_upload_functional(
+        self, nginx_proxy: conftest.TusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test creation on a TLS server."""
 
         ssl_ctx = ssl.create_default_context(cafile=nginx_proxy.certificate)

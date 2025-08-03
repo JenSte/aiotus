@@ -38,8 +38,7 @@ jobs:
         isort aiotus tests
     - name: Run mypy
       run: |
-        mypy --strict aiotus
-        mypy tests
+        mypy --strict aiotus tests
     - name: Run bandit
       run: |
         bandit --recursive aiotus

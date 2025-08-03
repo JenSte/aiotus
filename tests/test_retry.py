@@ -1,48 +1,56 @@
 """Test the 'upload()' function."""
 
+from __future__ import annotations
+
 import io
 import logging
 
 import aiohttp
-import pytest  # type: ignore
-import tenacity  # type: ignore
+import pytest
+import tenacity
 import yarl
 
 import aiotus
 
+from . import conftest
+
 
 class TestRetry:
-    async def test_upload_functional(self, tus_server, memory_file):
+    async def test_upload_functional(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test the normal functionality of the 'upload()' function."""
 
         metadata = {"Content-Type": "image/jpeg".encode(), "key": None}
         additional_headers = {"h1": "v1", "h2": "v2"}
 
         location = await aiotus.upload(
-            tus_server["create_endpoint"],
+            tus_server.create_endpoint,
             memory_file,
             metadata,
             headers=additional_headers,
         )
 
         assert location is not None
-        assert tus_server["metadata"] == "Content-Type aW1hZ2UvanBlZw==,key"
-        assert tus_server["data"] is not None
-        assert tus_server["data"] == memory_file.getbuffer()
+        assert tus_server.metadata == "Content-Type aW1hZ2UvanBlZw==,key"
+        assert tus_server.data is not None
+        assert tus_server.data == memory_file.getbuffer()
 
-        assert tus_server["post_headers"] is not None
-        assert "h1" in tus_server["post_headers"]
-        assert tus_server["post_headers"]["h1"] == "v1"
-        assert "h2" in tus_server["post_headers"]
-        assert tus_server["post_headers"]["h2"] == "v2"
+        assert tus_server.post_headers is not None
+        assert "h1" in tus_server.post_headers
+        assert tus_server.post_headers["h1"] == "v1"
+        assert "h2" in tus_server.post_headers
+        assert tus_server.post_headers["h2"] == "v2"
 
-        assert tus_server["head_headers"] is not None
-        assert "h1" in tus_server["head_headers"]
-        assert tus_server["head_headers"]["h1"] == "v1"
-        assert "h2" in tus_server["head_headers"]
-        assert tus_server["head_headers"]["h2"] == "v2"
+        assert tus_server.head_headers is not None
+        assert "h1" in tus_server.head_headers
+        assert tus_server.head_headers["h1"] == "v1"
+        assert "h2" in tus_server.head_headers
+        assert tus_server.head_headers["h2"] == "v2"
 
-    async def test_upload_client_session(self, tus_server, memory_file):
+    async def test_upload_client_session(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Use a custom client session."""
 
         headers = {"Authorization": "Basic xyz"}
@@ -50,8 +58,9 @@ class TestRetry:
 
         async with aiohttp.ClientSession(headers=headers) as s:
             location = await aiotus.upload(
-                tus_server["create_endpoint"], memory_file, md1, client_session=s
+                tus_server.create_endpoint, memory_file, md1, client_session=s
             )
+            assert location is not None
 
             additional_headers = {"h1": "v1", "h2": "v2"}
             md2 = await aiotus.metadata(
@@ -60,125 +69,138 @@ class TestRetry:
 
             assert not s.closed
 
-        assert tus_server["data"] is not None
-        assert tus_server["data"] == memory_file.getbuffer()
-        assert tus_server["post_headers"] is not None
-        assert "Authorization" in tus_server["post_headers"]
-        assert tus_server["post_headers"]["Authorization"] == headers["Authorization"]
-        assert tus_server["head_headers"] is not None
-        assert "h1" in tus_server["head_headers"]
-        assert tus_server["head_headers"]["h1"] == "v1"
-        assert "h2" in tus_server["head_headers"]
-        assert tus_server["head_headers"]["h2"] == "v2"
+        assert tus_server.data is not None
+        assert tus_server.data == memory_file.getbuffer()
+        assert tus_server.post_headers is not None
+        assert "Authorization" in tus_server.post_headers
+        assert tus_server.post_headers["Authorization"] == headers["Authorization"]
+        assert tus_server.head_headers is not None
+        assert "h1" in tus_server.head_headers
+        assert tus_server.head_headers["h1"] == "v1"
+        assert "h2" in tus_server.head_headers
+        assert tus_server.head_headers["h2"] == "v2"
         assert md1 == md2
 
-    async def test_upload_wrong_metadata(self, tus_server, memory_file):
+    async def test_upload_wrong_metadata(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test if wrong metadata is rejected."""
 
-        with pytest.raises(TypeError) as excinfo:
-            await aiotus.upload(tus_server["create_endpoint"], memory_file, {"k": "v"})
-
-        assert "bytes-like object is required" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(TypeError, match="bytes-like object is required"):
             await aiotus.upload(
-                tus_server["create_endpoint"], memory_file, {"²": "2".encode()}
+                tus_server.create_endpoint,
+                memory_file,
+                {"k": "v"},  # type: ignore[dict-item]
             )
 
-        assert "ASCII characters" in str(excinfo.value)
+        with pytest.raises(ValueError, match="ASCII characters"):
+            await aiotus.upload(
+                tus_server.create_endpoint, memory_file, {"²": "2".encode()}
+            )
 
-    async def test_retry(self, tus_server, memory_file):
+    async def test_retry(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test the retry functionality."""
 
         # Make the server fail a few times to test the retry logic.
-        tus_server["retries_head"] = 3
-        tus_server["retries_upload"] = 3
+        tus_server.retries_head = 3
+        tus_server.retries_upload = 3
 
         config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
         md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
 
         location = await aiotus.upload(
-            tus_server["create_endpoint"], memory_file, md1, config=config
+            tus_server.create_endpoint, memory_file, md1, config=config
         )
 
         assert location is not None
-        assert tus_server["data"] is not None
-        assert tus_server["data"] == memory_file.getbuffer()
+        assert tus_server.data is not None
+        assert tus_server.data == memory_file.getbuffer()
 
-        tus_server["retries_head"] = 3
+        tus_server.retries_head = 3
         md2 = await aiotus.metadata(location, config=config)
 
         assert md1 == md2
 
-        tus_server["retries_head"] = 11
+        tus_server.retries_head = 11
         md = await aiotus.metadata(location, config=config)
 
         assert md is None
 
-    async def test_upload_create_retries_exceeded(self, tus_server, memory_file):
+    async def test_upload_create_retries_exceeded(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Not enough retries to create the upload."""
 
-        tus_server["retries_create"] = 11
+        tus_server.retries_create = 11
 
         config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
 
         location = await aiotus.upload(
-            tus_server["create_endpoint"], memory_file, config=config
+            tus_server.create_endpoint, memory_file, config=config
         )
 
         assert location is None
-        assert tus_server["data"] is None  # Upload could not be created.
+        assert tus_server.data is None  # Upload could not be created.
 
-    async def test_upload_upload_retries_exceeded(self, tus_server, memory_file):
+    async def test_upload_upload_retries_exceeded(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Not enough retries to do the upload."""
 
-        tus_server["retries_upload"] = 11
+        tus_server.retries_upload = 11
 
         config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
 
         location = await aiotus.upload(
-            tus_server["create_endpoint"], memory_file, config=config
+            tus_server.create_endpoint, memory_file, config=config
         )
 
         assert location is None
-        assert tus_server["data"] is not None  # Upload could be created.
+        assert tus_server.data is not None  # Upload could be created.
 
-    async def test_upload_relative_create(self, tus_server, memory_file):
+    async def test_upload_relative_create(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test what happens if the server returns a relative URL on creation."""
 
         # Make the create-handler return only the last part of the URL.
-        path = tus_server["upload_endpoint"].path
-        tus_server["upload_endpoint"] = yarl.URL(path.split("/")[-1])
+        path = tus_server.upload_endpoint.path
+        tus_server.upload_endpoint = yarl.URL(path.split("/")[-1])
 
-        location = await aiotus.upload(tus_server["create_endpoint"], memory_file)
+        location = await aiotus.upload(tus_server.create_endpoint, memory_file)
 
         assert location is not None
-        assert tus_server["data"] is not None
-        assert tus_server["data"] == memory_file.getbuffer()
+        assert tus_server.data is not None
+        assert tus_server.data == memory_file.getbuffer()
 
-    async def test_upload_file(self, tus_server):
+    async def test_upload_file(self, tus_server: conftest.MockTusServer) -> None:
         """Test upload of an actual file, not an 'io.BytesIO'."""
 
         md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
 
         with open(__file__, "rb") as file:
-            location = await aiotus.upload(tus_server["create_endpoint"], file, md1)
+            location = await aiotus.upload(tus_server.create_endpoint, file, md1)
 
         assert location is not None
-        assert tus_server["data"] is not None
+        assert tus_server.data is not None
         with open(__file__, "rb") as file:
             data = file.read()
-            assert tus_server["data"] == data
+            assert tus_server.data == data
 
         md2 = await aiotus.metadata(str(location))
         assert md1 == md2
 
-    async def test_tusd(self, tusd, memory_file):
+    async def test_tusd(
+        self, tusd: conftest.TusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test communication with the the tusd server."""
 
         data = memory_file.getvalue()
 
         location = await aiotus.upload(tusd.url, memory_file)
+        assert location is not None
 
         async with aiohttp.ClientSession() as session:
             async with session.get(location) as response:
@@ -192,6 +214,7 @@ class TestRetry:
         # Upload a file with metadata to tusd, and check if we can read it back.
         md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
         location = await aiotus.upload(tusd.url, memory_file, md1)
+        assert location is not None
 
         md2 = await aiotus.metadata(location)
         assert md1 == md2
@@ -200,7 +223,9 @@ class TestRetry:
 class TestUploadMultiple:
     """Test the 'aiotus.upload_multiple()' function."""
 
-    async def test_upload_functional(self, tusd, memory_file):
+    async def test_upload_functional(
+        self, tusd: conftest.TusServer, memory_file: io.BytesIO
+    ) -> None:
         """Upload files, read back as a single file."""
 
         file_a = io.BytesIO(b"\x00\x01")
@@ -213,6 +238,7 @@ class TestUploadMultiple:
         location = await aiotus.upload_multiple(
             tusd.url, [file_a, file_b, file_c, file_d], md1
         )
+        assert location is not None
 
         md2 = await aiotus.metadata(location)
         assert md1 == md2
@@ -223,7 +249,9 @@ class TestUploadMultiple:
 
                 assert body == b"\x00\x01\x02\x03\x04\x05\x06\x07"
 
-    async def test_upload_functional_session(self, tusd, memory_file):
+    async def test_upload_functional_session(
+        self, tusd: conftest.TusServer, memory_file: io.BytesIO
+    ) -> None:
         """Upload files, read back as a single file, passing in a HTTP session."""
 
         file_a = io.BytesIO(b"\x00\x01")
@@ -235,6 +263,7 @@ class TestUploadMultiple:
             location = await aiotus.upload_multiple(
                 tusd.url, [file_a, file_b, file_c, file_d], None, session
             )
+            assert location is not None
 
             md = await aiotus.metadata(location)
             assert not md
@@ -244,15 +273,17 @@ class TestUploadMultiple:
 
                 assert body == b"\x00\x01\x02\x03\x04\x05\x06\x07"
 
-    async def test_not_supported(self, tus_server, memory_file):
+    async def test_not_supported(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Try uploading to a server that does not support concatenation."""
 
         location = await aiotus.upload_multiple(
-            tus_server["create_endpoint"], [memory_file]
+            tus_server.create_endpoint, [memory_file]
         )
         assert location is None
 
-    async def test_part_failure(self, tusd):
+    async def test_part_failure(self, tusd: conftest.TusServer) -> None:
         """Check the handling of a failure to upload a part."""
 
         file_a = io.BytesIO(b"\x00\x01")
@@ -261,14 +292,16 @@ class TestUploadMultiple:
         location = await aiotus.upload_multiple(tusd.url, [file_a, file_b])
         assert location is None
 
-    async def test_timeout(self, tus_server, memory_file):
+    async def test_timeout(
+        self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
+    ) -> None:
         """Test handling of the retry exception."""
 
-        tus_server["retries_options"] = 20
+        tus_server.retries_options = 20
 
         config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
         location = await aiotus.upload_multiple(
-            tus_server["create_endpoint"], [memory_file], config=config
+            tus_server.create_endpoint, [memory_file], config=config
         )
 
         assert location is None
@@ -277,7 +310,7 @@ class TestUploadMultiple:
 class TestTenacity:
     """Test the log functions for tenacity."""
 
-    async def test_exception_logging(self, caplog):
+    async def test_exception_logging(self, caplog: pytest.LogCaptureFixture) -> None:
         rt = tenacity.AsyncRetrying(
             retry=tenacity.retry_if_exception_type(RuntimeError),
             stop=tenacity.stop_after_attempt(3),
@@ -298,7 +331,7 @@ class TestTenacity:
             assert lg[2][2] == "Test failed, retrying in 0 second(s): test error"
             assert lg[3][2] == "Trying test again, attempt number 3..."
 
-    async def test_result_logging(self, caplog):
+    async def test_result_logging(self, caplog: pytest.LogCaptureFixture) -> None:
         rt = tenacity.AsyncRetrying(
             retry=tenacity.retry_if_result(lambda r: r is None),
             stop=tenacity.stop_after_attempt(2),
@@ -318,9 +351,9 @@ class TestTenacity:
             assert lg[1][2] == "Trying test again, attempt number 2..."
 
     @staticmethod
-    async def raise_runtime_error():
+    async def raise_runtime_error() -> None:
         raise RuntimeError("test error")
 
     @staticmethod
-    async def return_none():
+    async def return_none() -> None:
         return None

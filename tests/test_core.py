@@ -1,28 +1,44 @@
 """Test the implementation of the core protocol."""
 
+from __future__ import annotations
+
 import binascii
+import io
 
 import aiohttp
-import pytest  # type: ignore
+import pytest
+import pytest_aiohttp
 
 import aiotus
 
+from . import conftest
+
 
 class TestOffset:
-    async def test_offset_exceptions(self, aiohttp_server, memory_file):
+    async def test_offset_exceptions(
+        self, aiohttp_server: pytest_aiohttp.AiohttpServer, memory_file: io.BytesIO
+    ) -> None:
         """Check for the different exceptions that can be thrown."""
 
-        async def handler_not_found(request):
+        async def handler_not_found(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             raise aiohttp.web.HTTPNotFound()
 
-        async def handler_no_offset(request):
+        async def handler_no_offset(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             raise aiohttp.web.HTTPOk()
 
-        async def handler_wrong_offset(request):
+        async def handler_wrong_offset(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             headers = {"Upload-Offset": "xyz"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_negative_offset(request):
+        async def handler_negative_offset(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             headers = {"Upload-Offset": "-1"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
@@ -68,10 +84,12 @@ class TestOffset:
 
         assert 'Unable to convert "Upload-Offset" header' in str(excinfo.value)
 
-    async def test_offset_functional(self, aiohttp_server):
+    async def test_offset_functional(
+        self, aiohttp_server: pytest_aiohttp.AiohttpServer
+    ) -> None:
         """Test the normal functionality of the '_offset' function."""
 
-        async def handler(request):
+        async def handler(request: aiohttp.web.Request) -> aiohttp.web.Response:
             assert "Tus-Resumable" in request.headers
             assert (
                 request.headers["Tus-Resumable"] == aiotus.common.TUS_PROTOCOL_VERSION
@@ -93,7 +111,7 @@ class TestOffset:
 
 
 class TestMetadata:
-    def test_parse_metadata(self):
+    def test_parse_metadata(self) -> None:
         """Check if metadata is parsed correctly."""
 
         md = aiotus.core._parse_metadata("")
@@ -114,33 +132,33 @@ class TestMetadata:
         md = aiotus.core._parse_metadata("k1 djE=, k2 djI=  ")
         assert md == {"k1": b"v1", "k2": b"v2"}
 
-        with pytest.raises(binascii.Error) as excinfo:
+        with pytest.raises(binascii.Error, match="padding") as excinfo:
             aiotus.core._parse_metadata("k1 djE")
-        assert "padding" in str(excinfo.value)
 
         with pytest.raises(binascii.Error) as excinfo:
             aiotus.core._parse_metadata("k1 dj&=")
         assert any(s in str(excinfo.value) for s in ("Non-base64", "Only base64"))
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError, match="more than two elements"):
             aiotus.core._parse_metadata("k v v")
-        assert "more than two elements" in str(excinfo.value)
 
-    async def test_metadata(self, aiohttp_server):
+    async def test_metadata(self, aiohttp_server: pytest_aiohttp.AiohttpServer) -> None:
         """Check the 'core.metadata()' function."""
 
-        async def handler_no_metadata(request):
+        async def handler_no_metadata(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             headers = {"Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION}
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_invalid(request):
+        async def handler_invalid(request: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {
                 "Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION,
                 "Upload-Metadata": "k1 djE",
             }
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_valid(request):
+        async def handler_valid(request: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {
                 "Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION,
                 "Upload-Metadata": "k1, k2 dmFsdWU=",
@@ -166,95 +184,125 @@ class TestMetadata:
 
 
 class TestUploadBuffer:
-    async def test_upload_buffer(self, tus_server, memory_file):
+    async def test_upload_buffer(
+        self,
+        tus_server: conftest.MockTusServer,
+        memory_file: io.BytesIO,
+    ) -> None:
         """Test the upload function without simulating errors."""
 
         # We don't want to test the creation functionality here, so just create the
         # byte array so that 'tus_server' can accept data.
-        tus_server["data"] = bytearray()
+        tus_server.data = bytearray()
 
         async with aiohttp.ClientSession() as s:
             # Pass a small chunksize so that we have multiple uploads even with
             # the small test file.
             await aiotus.core.upload_buffer(
-                s, tus_server["upload_endpoint"], memory_file, ssl=False, chunksize=3
+                s, tus_server.upload_endpoint, memory_file, ssl=False, chunksize=3
             )
 
-        assert tus_server["data"] is not None
-        assert tus_server["data"] == memory_file.getbuffer()
+        assert tus_server.data is not None
+        assert tus_server.data == memory_file.getbuffer()
 
-    async def test_server_offset(self, tus_server, memory_file):
+    async def test_server_offset(
+        self,
+        tus_server: conftest.MockTusServer,
+        memory_file: io.BytesIO,
+    ) -> None:
         """Test if the upload routine honors the offset value at the server-side."""
 
-        tus_server["data"] = bytearray()
+        tus_server.data = bytearray()
 
         # Make the server drop half of the uploaded data for each request.
-        tus_server["drop_upload"] = True
+        tus_server.drop_upload = True
 
         async with aiohttp.ClientSession() as s:
             await aiotus.core.upload_buffer(
-                s, tus_server["upload_endpoint"], memory_file, ssl=False, chunksize=3
+                s, tus_server.upload_endpoint, memory_file, ssl=False, chunksize=3
             )
 
-        assert tus_server["data"] is not None
-        assert tus_server["data"] == memory_file.getbuffer()
+        assert tus_server.data is not None
+        assert tus_server.data == memory_file.getbuffer()
 
-    async def test_server_error(self, tus_server, memory_file):
+    async def test_server_error(
+        self,
+        tus_server: conftest.MockTusServer,
+        memory_file: io.BytesIO,
+    ) -> None:
         """Simulate a server error."""
 
-        tus_server["data"] = bytearray()
-        tus_server["retries_upload"] = 2
+        tus_server.data = bytearray()
+        tus_server.retries_upload = 2
 
         with pytest.raises(aiohttp.ClientResponseError) as excinfo:
             async with aiohttp.ClientSession() as s:
                 await aiotus.core.upload_buffer(
-                    s, tus_server["upload_endpoint"], memory_file
+                    s, tus_server.upload_endpoint, memory_file
                 )
 
         assert "Internal Server Error" in str(excinfo.value)
 
-    async def test_server_wrong_size(self, tus_server, memory_file):
+    async def test_server_wrong_size(
+        self,
+        tus_server: conftest.MockTusServer,
+        memory_file: io.BytesIO,
+    ) -> None:
         """Simulate the case where the server has a bitter file than locally."""
 
-        tus_server["data"] = bytearray(20 * b"x")
+        tus_server.data = bytearray(20 * b"x")
 
         with pytest.raises(aiotus.common.ProtocolError) as excinfo:
             async with aiohttp.ClientSession() as s:
                 await aiotus.core.upload_buffer(
-                    s, tus_server["upload_endpoint"], memory_file
+                    s, tus_server.upload_endpoint, memory_file
                 )
 
         assert "Server offset too big" in str(excinfo.value)
 
-    async def test_eof(self, tus_server, eof_memory_file):
+    async def test_eof(
+        self,
+        tus_server: conftest.MockTusServer,
+        eof_memory_file: io.BytesIO,
+    ) -> None:
         """Simulate the case where the local file shrinks during an upload."""
 
-        tus_server["data"] = bytearray()
+        tus_server.data = bytearray()
 
         with pytest.raises(RuntimeError) as excinfo:
             async with aiohttp.ClientSession() as s:
                 await aiotus.core.upload_buffer(
-                    s, tus_server["upload_endpoint"], eof_memory_file
+                    s, tus_server.upload_endpoint, eof_memory_file
                 )
 
         assert "Buffer returned unexpected EOF" in str(excinfo.value)
 
 
 class TestConfiguration:
-    async def test_configuration_exceptions(self, aiohttp_server):
+    async def test_configuration_exceptions(
+        self, aiohttp_server: pytest_aiohttp.AiohttpServer
+    ) -> None:
         """Check for the different exceptions that can be thrown."""
 
-        async def handler_not_found(request):
+        async def handler_not_found(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             raise aiohttp.web.HTTPNotFound()
 
-        async def handler_no_version(request):
+        async def handler_no_version(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             raise aiohttp.web.HTTPOk()
 
-        async def handler_max_size_invalid(request):
+        async def handler_max_size_invalid(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             headers = {"Tus-Version": "1.0.0", "Tus-Max-Size": "xyz"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_max_size_negative(request):
+        async def handler_max_size_negative(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             headers = {"Tus-Version": "1.0.0", "Tus-Max-Size": "-1"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
@@ -289,14 +337,18 @@ class TestConfiguration:
             async with aiohttp.ClientSession() as session:
                 await aiotus.core.configuration(session, url)
 
-    async def test_configuration_function(self, aiohttp_server):
+    async def test_configuration_function(
+        self, aiohttp_server: pytest_aiohttp.AiohttpServer
+    ) -> None:
         """Test the normal functionality of the 'configuration()' function."""
 
-        async def handler_only_version(request):
+        async def handler_only_version(
+            request: aiohttp.web.Request,
+        ) -> aiohttp.web.Response:
             headers = {"Tus-Version": "1.0.0"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_all(request):
+        async def handler_all(request: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {
                 "Tus-Version": "1.0.0,0.9.9",
                 "Tus-Max-Size": "1024",
@@ -332,7 +384,7 @@ class TestConfiguration:
         assert config.protocol_extensions[0] == "creation"
         assert config.protocol_extensions[1] == "checksum"
 
-    async def test_configuration_function_tusd(self, tusd):
+    async def test_configuration_function_tusd(self, tusd: conftest.TusServer) -> None:
         """Test the normal functionality of the 'configuration()' function with tusd."""
 
         async with aiohttp.ClientSession() as session:

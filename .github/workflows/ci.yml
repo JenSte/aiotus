@@ -33,9 +33,6 @@ jobs:
     - name: Run linters
       run: |
         make lint
-    - name: Run isort
-      run: |
-        isort aiotus tests
     - name: Run mypy
       run: |
         mypy --strict aiotus tests

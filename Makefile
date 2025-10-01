@@ -1,6 +1,6 @@
 all: \
-	black-check \
 	lint \
+	format-check \
 	mypy-check \
 	bandit-check \
 	zizmor-check test
@@ -12,16 +12,9 @@ bandit-check:
 	    --recursive \
 	    aiotus
 
-black:
-	@echo Formatting code using black...
-	@black aiotus tests
-
-black-check:
-	@echo Running black...
-	@black \
-	    --check \
-	    --diff \
-	    aiotus tests
+format-check:
+	@echo Checking formatting...
+	@ruff --quiet format --check --diff aiotus tests
 
 lint:
 	@echo Running ruff...
@@ -121,10 +114,10 @@ veryclean: clean
 	    venv
 
 .PHONY: \
-	black \
 	clean \
 	pyupgrade \
 	doc \
+	format-check \
 	lint \
 	mypy-check \
 	show-certificate \

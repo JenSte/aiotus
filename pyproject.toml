@@ -44,7 +44,7 @@ arg-type-hints-in-docstring = false
 check-return-types = false
 
 [tool.ruff.lint]
-extend-select = ["D", "N"]
+extend-select = ["D", "I", "N"]
 ignore = [
     # Collides with D211.
     "D203",
@@ -70,10 +70,6 @@ requires = [
 branch = true
 relative_files = true
 omit = ["aiotus/__main__.py"]
-
-[tool.isort]
-include_trailing_comma = true
-multi_line_output = 3
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

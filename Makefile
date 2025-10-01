@@ -1,6 +1,5 @@
 all: \
 	black-check \
-	isort-check \
 	lint \
 	mypy-check \
 	bandit-check \
@@ -21,13 +20,6 @@ black-check:
 	@echo Running black...
 	@black \
 	    --check \
-	    --diff \
-	    aiotus tests
-
-isort-check:
-	@echo Running isort...
-	@isort \
-	    --check-only \
 	    --diff \
 	    aiotus tests
 
@@ -133,7 +125,6 @@ veryclean: clean
 	clean \
 	pyupgrade \
 	doc \
-	isort-check \
 	lint \
 	mypy-check \
 	show-certificate \

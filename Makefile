@@ -1,6 +1,5 @@
 all: \
 	black-check \
-	flake8-check \
 	isort-check \
 	lint \
 	mypy-check \
@@ -24,11 +23,6 @@ black-check:
 	@black \
 	    --check \
 	    --diff \
-	    aiotus tests
-
-flake8-check:
-	@echo Running flake8...
-	@flake8 \
 	    aiotus tests
 
 isort-check:
@@ -140,7 +134,6 @@ veryclean: clean
 	clean \
 	pyupgrade \
 	doc \
-	flake8-check \
 	isort-check \
 	lint \
 	mypy-check \

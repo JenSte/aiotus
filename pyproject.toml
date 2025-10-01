@@ -34,6 +34,15 @@ dependencies = [
 "Homepage" = "https://github.com/JenSte/aiotus"
 "Documentation" = "https://aiotus.readthedocs.io"
 
+[tool.pydoclint]
+style = "sphinx"
+quiet = true
+allow-init-docstring = true
+# Do not check/require type hints in the docstring, this is
+# done separaretly by the type checker.
+arg-type-hints-in-docstring = false
+check-return-types = false
+
 [tool.setuptools]
 packages = ["aiotus"]
 

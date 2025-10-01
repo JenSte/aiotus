@@ -39,6 +39,8 @@ isort-check:
 	    aiotus tests
 
 lint:
+	@echo Running pycodestyle...
+	@pycodestyle --config=.pycodestyle.ini aiotus tests
 	@echo Running pydoclint...
 	@pydoclint aiotus
 

@@ -10,7 +10,6 @@ pydoclint==0.7.3
 ruff==0.13.2
 
 bandit==1.8.6
-black==25.9.0
 mypy==1.18.2
 zizmor==1.15.2
 

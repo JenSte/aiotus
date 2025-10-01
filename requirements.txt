@@ -6,9 +6,6 @@ aiohttp==3.13.1
 tenacity==9.1.2
 
 pycodestyle==2.14.0
-flake8==7.3.0
-flake8-docstrings==1.7.0
-pep8-naming==0.15.1
 pydoclint==0.7.3
 ruff==0.13.2
 

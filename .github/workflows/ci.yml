@@ -30,9 +30,9 @@ jobs:
     - name: Run black
       run: |
         black --check aiotus tests
-    - name: Run flake8
+    - name: Run linters
       run: |
-        flake8 aiotus tests
+        make lint
     - name: Run isort
       run: |
         isort aiotus tests

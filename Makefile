@@ -1,4 +1,12 @@
-all: black-check flake8-check isort-check mypy-check bandit-check zizmor-check test
+all: \
+	black-check \
+	flake8-check \
+	isort-check \
+	lint \
+	mypy-check \
+	bandit-check \
+	zizmor-check \
+	test
 
 bandit-check:
 	@echo Running bandit...
@@ -29,6 +37,10 @@ isort-check:
 	    --check-only \
 	    --diff \
 	    aiotus tests
+
+lint:
+	@echo Running pydoclint...
+	@pydoclint aiotus
 
 mypy-check:
 	@echo Running mypy...
@@ -126,6 +138,7 @@ veryclean: clean
 	doc \
 	flake8-check \
 	isort-check \
+	lint \
 	mypy-check \
 	show-certificate \
 	test \

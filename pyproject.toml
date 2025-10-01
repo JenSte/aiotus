@@ -43,6 +43,18 @@ allow-init-docstring = true
 arg-type-hints-in-docstring = false
 check-return-types = false
 
+[tool.ruff.lint]
+extend-select = ["D", "N"]
+ignore = [
+    # Collides with D211.
+    "D203",
+    # Collides with D212.
+    "D213",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D"]
+
 [tool.setuptools]
 packages = ["aiotus"]
 

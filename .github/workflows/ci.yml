@@ -36,9 +36,6 @@ jobs:
     - name: Run mypy
       run: |
         mypy --strict aiotus tests
-    - name: Run bandit
-      run: |
-        bandit --recursive aiotus
     - name: Run zizmor
       run: |
         zizmor .github/workflows

@@ -7,7 +7,6 @@ import io
 import logging
 import math
 import os.path
-import socket
 import tempfile
 from typing import TYPE_CHECKING, Any
 
@@ -17,7 +16,7 @@ import pytest_asyncio
 import yarl
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import AsyncGenerator, Mapping
+    from collections.abc import AsyncGenerator, Callable, Mapping
 
     import pytest_aiohttp
 
@@ -212,14 +211,6 @@ class TusServer:
     certificate: str | None = None
 
 
-def random_port() -> int:
-    """Find a random port, that hopefully stays unused until it is used."""
-    with contextlib.closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return s.getsockname()[1]  # type: ignore[no-any-return]
-
-
 @contextlib.asynccontextmanager
 async def start_process(
     program: str, args: list[str], *, cwd: str
@@ -240,13 +231,15 @@ async def start_process(
 
 
 @pytest_asyncio.fixture(loop_scope="module")
-async def tusd(pytestconfig: pytest.Config) -> AsyncGenerator[TusServer]:
+async def tusd(
+    pytestconfig: pytest.Config, unused_tcp_port_factory: Callable[[], int]
+) -> AsyncGenerator[TusServer]:
     """Start the tusd (tus.io reference implementation) and yield the upload URL.
 
     Assumes that the tusd executable is located in the pytest rootdir.
     """
     host = "0.0.0.0"  # noqa: S104
-    port = random_port()
+    port = unused_tcp_port_factory()
     basepath = "/files/"
 
     with tempfile.TemporaryDirectory() as d:
@@ -307,11 +300,13 @@ _nginx_conf = """
 
 
 @pytest_asyncio.fixture(loop_scope="module")
-async def nginx_proxy(tusd: TusServer) -> AsyncGenerator[TusServer]:
+async def nginx_proxy(
+    tusd: TusServer, unused_tcp_port_factory: Callable[[], int]
+) -> AsyncGenerator[TusServer]:
     """Start an nginx proxy in front of tusd that does TLS termination."""
     test_dir = os.path.dirname(os.path.abspath(__file__))
     certificate = os.path.join(test_dir, "selfsigned.crt")
-    port = random_port()
+    port = unused_tcp_port_factory()
 
     fmt = {
         "crt": certificate,

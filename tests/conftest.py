@@ -8,7 +8,7 @@ import logging
 import math
 import os.path
 import tempfile
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
@@ -17,13 +17,14 @@ import yarl
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import AsyncGenerator, Callable, Mapping
+    from typing import Any
 
     import pytest_aiohttp
 
 logger = logging.getLogger(__name__)
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(kw_only=True)
 class MockTusServer:
     # Number of times the respective handlers will fail.
     retries_create: int

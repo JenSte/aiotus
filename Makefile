@@ -37,9 +37,8 @@ coverage_html/index.html: .coverage
 pyupgrade:
 	@echo Running pyupgrade...
 	pyupgrade \
-	    --py39-plus \
-	    --keep-runtime-typing \
-	    aiotus/*.py
+	    --py310-plus \
+	    aiotus/*.py tests/*.py
 
 doc:
 	make -C docs clean html

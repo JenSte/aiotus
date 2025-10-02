@@ -11,13 +11,14 @@ import asyncio
 import base64
 import dataclasses
 import io
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING
 
 from . import common
 from .log import logger
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
+    from typing import BinaryIO
 
     import aiohttp
     import multidict

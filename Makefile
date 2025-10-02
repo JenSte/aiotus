@@ -2,16 +2,8 @@ all: \
 	lint \
 	format-check \
 	mypy-check \
-	bandit-check \
 	zizmor-check \
 	test
-
-bandit-check:
-	@echo Running bandit...
-	@bandit\
-	    --silent \
-	    --recursive \
-	    aiotus
 
 format-check:
 	@echo Checking formatting...

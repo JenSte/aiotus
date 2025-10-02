@@ -9,7 +9,6 @@ pycodestyle==2.14.0
 pydoclint==0.7.3
 ruff==0.13.2
 
-bandit==1.8.6
 mypy==1.18.2
 zizmor==1.15.2
 

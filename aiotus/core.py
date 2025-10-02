@@ -11,15 +11,17 @@ import asyncio
 import base64
 import dataclasses
 import io
-from collections.abc import Mapping
-from typing import BinaryIO, Optional
-
-import aiohttp
-import multidict
-import yarl
+from typing import TYPE_CHECKING, BinaryIO
 
 from . import common
 from .log import logger
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
+    import aiohttp
+    import multidict
+    import yarl
 
 
 @dataclasses.dataclass
@@ -32,7 +34,7 @@ class ServerConfiguration:
     preference.
     """
 
-    max_size: Optional[int]
+    max_size: int | None
     """
     The maximum allowed file size (in bytes), if reported by the server.
     """
@@ -51,29 +53,29 @@ def _parse_positive_integer_header(
     Raises a ProtocolError if the conversion is not posible.
     """
     if header_name not in headers:
-        raise common.ProtocolError(
-            f'HTTP header "{header_name}" not included in server response.'
-        )
+        msg = f'HTTP header "{header_name}" not included in server response.'
+        raise common.ProtocolError(msg)
 
     header_value = headers[header_name]
 
     try:
         if (result := int(header_value)) < 0:
-            raise RuntimeError()
-
-        return result
-    except Exception:
-        raise common.ProtocolError(
+            raise RuntimeError  # noqa: TRY301
+    except Exception as e:
+        msg = (
             f'Unable to convert "{header_name}" header '
             f'"{header_value}" to a positive integer.'
         )
+        raise common.ProtocolError(msg) from e
+
+    return result
 
 
 async def offset(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    ssl: common.SSLArgument = True,
-    headers: Optional[Mapping[str, str]] = None,
+    ssl: common.SSLArgument = True,  # noqa: FBT002
+    headers: Mapping[str, str] | None = None,
 ) -> int:
     """Get the number of uploaded bytes.
 
@@ -98,15 +100,16 @@ def _parse_metadata(header: str) -> common.Metadata:
     if not (header := header.strip()):
         return {}
 
-    md: dict[str, Optional[bytes]] = {}
+    md: dict[str, bytes | None] = {}
     for pair in header.split(","):
         kv = pair.split()
         if len(kv) == 1:
             md[kv[0]] = None
-        elif len(kv) == 2:
+        elif len(kv) == 2:  # noqa: PLR2004
             md[kv[0]] = base64.b64decode(kv[1], validate=True)
         else:
-            raise ValueError("Key/Value pair consists of more than two elements.")
+            msg = "Key/Value pair consists of more than two elements."
+            raise ValueError(msg)
 
     return md
 
@@ -114,8 +117,8 @@ def _parse_metadata(header: str) -> common.Metadata:
 async def metadata(
     session: aiohttp.ClientSession,
     location: yarl.URL,
-    ssl: common.SSLArgument = True,
-    headers: Optional[Mapping[str, str]] = None,
+    ssl: common.SSLArgument = True,  # noqa: FBT002
+    headers: Mapping[str, str] | None = None,
 ) -> common.Metadata:
     """Get the metadata associated with an upload.
 
@@ -142,16 +145,17 @@ async def metadata(
         try:
             return _parse_metadata(response.headers["Upload-Metadata"])
         except Exception as e:
-            raise common.ProtocolError(f"Unable to parse metadata: {e}")
+            msg = f"Unable to parse metadata: {e}"
+            raise common.ProtocolError(msg) from e
 
 
-async def upload_buffer(
+async def upload_buffer(  # noqa: PLR0913
     session: aiohttp.ClientSession,
     location: yarl.URL,
     buffer: BinaryIO,
-    ssl: common.SSLArgument = True,
+    ssl: common.SSLArgument = True,  # noqa: FBT002
     chunksize: int = 4 * 1024 * 1024,
-    headers: Optional[Mapping[str, str]] = None,
+    headers: Mapping[str, str] | None = None,
 ) -> None:
     """Upload data to the server.
 
@@ -180,12 +184,14 @@ async def upload_buffer(
     while True:
         if current_server_offset == total_size:
             # Done, the whole file is on the server.
-            logger.info("Complete buffer uploaded.")
+            msg = "Complete buffer uploaded."
+            logger.info(msg)
             break
 
         if current_server_offset > total_size:
             # The offset that the server expects next does not exist.
-            raise common.ProtocolError("Server offset too big.")
+            msg = "Server offset too big."
+            raise common.ProtocolError(msg)
 
         if current_read_offset != current_server_offset:
             # Seek to the offset that the server expects next.
@@ -194,7 +200,8 @@ async def upload_buffer(
 
         if not (chunk := await asyncio.to_thread(buffer.read, chunksize)):
             # If the checks above are correct, we should never get here.
-            raise RuntimeError("Buffer returned unexpected EOF.")
+            msg = "Buffer returned unexpected EOF."
+            raise RuntimeError(msg)
 
         current_read_offset += len(chunk)
 
@@ -224,8 +231,8 @@ async def upload_buffer(
 async def configuration(
     session: aiohttp.ClientSession,
     url: yarl.URL,
-    ssl: common.SSLArgument = True,
-    headers: Optional[Mapping[str, str]] = None,
+    ssl: common.SSLArgument = True,  # noqa: FBT002
+    headers: Mapping[str, str] | None = None,
 ) -> ServerConfiguration:
     """Get the server's configuration.
 
@@ -241,7 +248,8 @@ async def configuration(
         response.raise_for_status()
 
         if "Tus-Version" not in response.headers:
-            raise common.ProtocolError('"Tus-Version" header not present.')
+            msg = '"Tus-Version" header not present.'
+            raise common.ProtocolError(msg)
 
         versions = response.headers["Tus-Version"].split(",")
         versions = [v.strip() for v in versions]

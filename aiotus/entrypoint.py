@@ -63,9 +63,10 @@ def _metadata(args: argparse.Namespace) -> int:
     return 0
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
     """Entrypoint function for when the module is executed directly.
 
+    :param argv: The command line arguments to the program.
     :return: Exit status for the program.
     """
     interpreter = pathlib.Path(sys.executable).name if sys.executable else "python3"
@@ -99,7 +100,7 @@ def main() -> int:
     )
     parser_metadata.set_defaults(func=_metadata)
 
-    args = parser.parse_args()
+    args = parser.parse_args(args=argv)
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)

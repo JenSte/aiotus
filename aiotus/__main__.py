@@ -4,4 +4,4 @@ import sys
 
 from . import entrypoint
 
-sys.exit(entrypoint.main())
+sys.exit(entrypoint.main(sys.argv[1:]))

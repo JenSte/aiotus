@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-import io
 import shutil
 import ssl
+from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
 
 import aiotus
 
-from . import conftest
+if TYPE_CHECKING:  # pragma: no cover
+    import io
+
+    from . import conftest
 
 
 @pytest.mark.skipif(shutil.which("nginx") is None, reason="nginx not found")
@@ -23,9 +26,9 @@ class TestTLS:
 
         # Make sure we actually use encryption, access via plain
         # HTTP shall fail.
+        http_url = nginx_proxy.url.with_scheme("http")
         async with aiohttp.ClientSession() as session:
             with pytest.raises(aiohttp.ClientResponseError) as excinfo:
-                http_url = nginx_proxy.url.with_scheme("http")
                 await aiotus.creation.create(session, http_url, memory_file, {})
             assert excinfo.value.status == 400
 
@@ -47,10 +50,9 @@ class TestTLS:
 
         # Uploading with TLS verification disabled shall work.
         async with aiohttp.ClientSession() as session:
-            async with aiohttp.ClientSession() as session:
-                await aiotus.creation.create(
-                    session, nginx_proxy.url, memory_file, {}, ssl=False
-                )
+            await aiotus.creation.create(
+                session, nginx_proxy.url, memory_file, {}, ssl=False
+            )
 
         # With TLS verification disabled the creation works.
         config = aiotus.RetryConfiguration(ssl=False)
@@ -58,9 +60,9 @@ class TestTLS:
         assert location is not None
 
         # Fetching the metadata over HTTP fails.
+        http_location = location.with_scheme("http")
         async with aiohttp.ClientSession() as session:
             with pytest.raises(aiohttp.ClientResponseError) as excinfo:
-                http_location = location.with_scheme("http")
                 await aiotus.core.metadata(session, http_location)
             assert "Bad Request" in str(excinfo.value)
 

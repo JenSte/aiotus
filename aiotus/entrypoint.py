@@ -6,7 +6,7 @@ import argparse
 import asyncio
 import logging
 import mimetypes
-import os.path
+import pathlib
 import sys
 
 from . import retry
@@ -17,24 +17,26 @@ def _upload(args: argparse.Namespace) -> int:
 
     Returns the exit status for the program.
     """
-    metadata = {"filename": os.path.basename(args.file).encode()}
+    metadata: dict[str, bytes | None] = {
+        "filename": pathlib.Path(args.file).name.encode()
+    }
 
     if mime_type := mimetypes.guess_type(args.file)[0]:
         metadata["mime_type"] = mime_type.encode()
 
     for meta in args.metadata:
         kv = meta.split("=", maxsplit=1)
-        metadata[kv[0]] = kv[1].encode() if (len(kv) == 2) else None
+        metadata[kv[0]] = kv[1].encode() if (len(kv) == 2) else None  # noqa: PLR2004
 
     try:
-        with open(args.file, "rb") as file:
+        with pathlib.Path(args.file).open("rb") as file:
             if location := asyncio.run(retry.upload(args.endpoint, file, metadata)):
-                print(str(location))
+                print(str(location))  # noqa: T201
                 return 0
     except KeyboardInterrupt:  # pragma: no cover
         pass
-    except Exception as e:
-        logging.error(f"Unable to upload file: {e}")
+    except Exception as e:  # noqa: BLE001
+        logging.error("Unable to upload file: %s", e)  # noqa: LOG015 TRY400
 
     return 1
 
@@ -47,18 +49,18 @@ def _metadata(args: argparse.Namespace) -> int:
     try:
         metadata = asyncio.run(retry.metadata(args.location))
         # Silence mypy, it does not detect the type 'asyncio.run()' returns.
-        assert isinstance(metadata, dict)  # nosec B101
+        assert isinstance(metadata, dict)  # noqa: S101
 
         for k, v in metadata.items():
             if v is None:
-                print(f"{k}")
+                print(f"{k}")  # noqa: T201
             else:
                 value = repr(v)[2:][:-1]
-                print(f"{k}: {value}")
-
-        return 0
+                print(f"{k}: {value}")  # noqa: T201
     except KeyboardInterrupt:  # pragma: no cover
         return 1
+
+    return 0
 
 
 def main() -> int:
@@ -66,10 +68,7 @@ def main() -> int:
 
     :return: Exit status for the program.
     """
-    if sys.executable:
-        interpreter = os.path.basename(sys.executable)
-    else:
-        interpreter = "python3"  # pragma: no cover
+    interpreter = pathlib.Path(sys.executable).name if sys.executable else "python3"
 
     parser = argparse.ArgumentParser(prog=f"{interpreter} -m aiotus")
     parser.add_argument("--debug", action="store_true", help="log debug messages")
@@ -112,4 +111,4 @@ def main() -> int:
         parser.print_help(file=sys.stderr)
         return 1
 
-    return args.func(args)  # type: ignore
+    return args.func(args)  # type: ignore[no-any-return]

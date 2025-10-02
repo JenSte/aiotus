@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
-from typing import TYPE_CHECKING, BinaryIO
+from typing import TYPE_CHECKING
 
 import yarl
 
@@ -19,6 +19,7 @@ from .log import logger
 
 if TYPE_CHECKING:  # pragma: no cover
     from collections.abc import Mapping
+    from typing import BinaryIO
 
     import aiohttp
 

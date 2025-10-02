@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import logging
+from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
@@ -12,7 +13,8 @@ import yarl
 
 import aiotus
 
-from . import conftest
+if TYPE_CHECKING:  # pragma: no cover
+    from . import conftest
 
 
 class TestRetry:
@@ -21,7 +23,7 @@ class TestRetry:
     ) -> None:
         """Test the normal functionality of the 'upload()' function."""
 
-        metadata = {"Content-Type": "image/jpeg".encode(), "key": None}
+        metadata = {"Content-Type": b"image/jpeg", "key": None}
         additional_headers = {"h1": "v1", "h2": "v2"}
 
         location = await aiotus.upload(
@@ -54,7 +56,7 @@ class TestRetry:
         """Use a custom client session."""
 
         headers = {"Authorization": "Basic xyz"}
-        md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
+        md1 = {"key1": b"value1", "key2": b"value2"}
 
         async with aiohttp.ClientSession(headers=headers) as s:
             location = await aiotus.upload(
@@ -94,9 +96,7 @@ class TestRetry:
             )
 
         with pytest.raises(ValueError, match="ASCII characters"):
-            await aiotus.upload(
-                tus_server.create_endpoint, memory_file, {"²": "2".encode()}
-            )
+            await aiotus.upload(tus_server.create_endpoint, memory_file, {"²": b"2"})
 
     async def test_retry(
         self, tus_server: conftest.MockTusServer, memory_file: io.BytesIO
@@ -108,7 +108,7 @@ class TestRetry:
         tus_server.retries_upload = 3
 
         config = aiotus.RetryConfiguration(max_retry_period_seconds=0.001)
-        md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
+        md1 = {"key1": b"value1", "key2": b"value2"}
 
         location = await aiotus.upload(
             tus_server.create_endpoint, memory_file, md1, config=config
@@ -178,7 +178,7 @@ class TestRetry:
     async def test_upload_file(self, tus_server: conftest.MockTusServer) -> None:
         """Test upload of an actual file, not an 'io.BytesIO'."""
 
-        md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
+        md1 = {"key1": b"value1", "key2": b"value2"}
 
         with open(__file__, "rb") as file:
             location = await aiotus.upload(tus_server.create_endpoint, file, md1)
@@ -202,17 +202,18 @@ class TestRetry:
         location = await aiotus.upload(tusd.url, memory_file)
         assert location is not None
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(location) as response:
-                body = await response.read()
-
-                assert body == data
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(location) as response,
+        ):
+            body = await response.read()
+            assert body == data
 
         md = await aiotus.metadata(str(location))
         assert not md  # We did not upload any metadata.
 
         # Upload a file with metadata to tusd, and check if we can read it back.
-        md1 = {"key1": "value1".encode(), "key2": "value2".encode()}
+        md1 = {"key1": b"value1", "key2": b"value2"}
         location = await aiotus.upload(tusd.url, memory_file, md1)
         assert location is not None
 
@@ -223,9 +224,7 @@ class TestRetry:
 class TestUploadMultiple:
     """Test the 'aiotus.upload_multiple()' function."""
 
-    async def test_upload_functional(
-        self, tusd: conftest.TusServer, memory_file: io.BytesIO
-    ) -> None:
+    async def test_upload_functional(self, tusd: conftest.TusServer) -> None:
         """Upload files, read back as a single file."""
 
         file_a = io.BytesIO(b"\x00\x01")
@@ -233,7 +232,7 @@ class TestUploadMultiple:
         file_c = io.BytesIO(b"\x04\x05")
         file_d = io.BytesIO(b"\x06\x07")
 
-        md1 = {"key": "value".encode()}
+        md1 = {"key": b"value"}
 
         location = await aiotus.upload_multiple(
             tusd.url, [file_a, file_b, file_c, file_d], md1
@@ -243,15 +242,14 @@ class TestUploadMultiple:
         md2 = await aiotus.metadata(location)
         assert md1 == md2
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(location) as response:
-                body = await response.read()
+        async with (
+            aiohttp.ClientSession() as session,
+            session.get(location) as response,
+        ):
+            body = await response.read()
+            assert body == b"\x00\x01\x02\x03\x04\x05\x06\x07"
 
-                assert body == b"\x00\x01\x02\x03\x04\x05\x06\x07"
-
-    async def test_upload_functional_session(
-        self, tusd: conftest.TusServer, memory_file: io.BytesIO
-    ) -> None:
+    async def test_upload_functional_session(self, tusd: conftest.TusServer) -> None:
         """Upload files, read back as a single file, passing in a HTTP session."""
 
         file_a = io.BytesIO(b"\x00\x01")
@@ -287,9 +285,9 @@ class TestUploadMultiple:
         """Check the handling of a failure to upload a part."""
 
         file_a = io.BytesIO(b"\x00\x01")
-        file_b = open("/proc/self/mem", "rb")
+        with open("/proc/self/mem", "rb") as file_b:
+            location = await aiotus.upload_multiple(tusd.url, [file_a, file_b])
 
-        location = await aiotus.upload_multiple(tusd.url, [file_a, file_b])
         assert location is None
 
     async def test_timeout(
@@ -319,7 +317,7 @@ class TestTenacity:
         )
 
         with caplog.at_level(logging.INFO, logger="aiotus"):
-            with pytest.raises(tenacity.RetryError):
+            with pytest.raises(tenacity.RetryError):  # noqa: PT012
                 async for attempt in rt:
                     with attempt:
                         await TestTenacity.raise_runtime_error()
@@ -340,7 +338,7 @@ class TestTenacity:
         )
 
         with caplog.at_level(logging.INFO, logger="aiotus"):
-            with pytest.raises(tenacity.RetryError):
+            with pytest.raises(tenacity.RetryError):  # noqa: PT012
                 async for attempt in rt:
                     with attempt:
                         await TestTenacity.return_none()
@@ -352,7 +350,8 @@ class TestTenacity:
 
     @staticmethod
     async def raise_runtime_error() -> None:
-        raise RuntimeError("test error")
+        msg = "test error"
+        raise RuntimeError(msg)
 
     @staticmethod
     async def return_none() -> None:

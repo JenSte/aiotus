@@ -9,13 +9,17 @@ import math
 import os.path
 import socket
 import tempfile
-from typing import Any, AsyncGenerator, Mapping, Optional
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import pytest
-import pytest_aiohttp
 import pytest_asyncio
 import yarl
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import AsyncGenerator, Mapping
+
+    import pytest_aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -33,14 +37,14 @@ class MockTusServer:
     upload_endpoint: yarl.URL
 
     # The uploaded data will be accumulated here.
-    data: Optional[bytearray]
+    data: bytearray | None
 
     # Metadata included in the creation will be placed here.
-    metadata: Optional[str]
+    metadata: str | None
 
     # Complete HTTP headers used in the last head/post request.
-    head_headers: Optional[Mapping[str, str]]
-    post_headers: Optional[Mapping[str, str]]
+    head_headers: Mapping[str, str] | None
+    post_headers: Mapping[str, str] | None
 
     # Drop some bytes while uploading, but don't return an error.
     drop_upload: bool
@@ -50,7 +54,9 @@ class MockTusServer:
 
 
 @pytest_asyncio.fixture
-async def tus_server(aiohttp_server: pytest_aiohttp.AiohttpServer) -> MockTusServer:
+async def tus_server(  # noqa: C901 PLR0915
+    aiohttp_server: pytest_aiohttp.AiohttpServer,
+) -> MockTusServer:
     """Return a fake tus server that can consume a single file."""
 
     async def handler_create(request: aiohttp.web.Request) -> aiohttp.web.Response:
@@ -58,7 +64,7 @@ async def tus_server(aiohttp_server: pytest_aiohttp.AiohttpServer) -> MockTusSer
 
         server.retries_create -= 1
         if server.retries_create > 0:
-            raise aiohttp.web.HTTPInternalServerError()
+            raise aiohttp.web.HTTPInternalServerError
 
         if "Upload-Metadata" in request.headers:
             server.metadata = request.headers["Upload-Metadata"]
@@ -76,7 +82,7 @@ async def tus_server(aiohttp_server: pytest_aiohttp.AiohttpServer) -> MockTusSer
 
         server.retries_options -= 1
         if server.retries_options > 0:
-            raise aiohttp.web.HTTPInternalServerError()
+            raise aiohttp.web.HTTPInternalServerError
 
         headers = {
             "Tus-Resumable": "1.0.0",
@@ -91,12 +97,12 @@ async def tus_server(aiohttp_server: pytest_aiohttp.AiohttpServer) -> MockTusSer
 
         server.retries_head -= 1
         if server.retries_head > 0:
-            raise aiohttp.web.HTTPInternalServerError()
+            raise aiohttp.web.HTTPInternalServerError
 
         server.head_headers = request.headers
 
         if server.data is None:
-            raise aiohttp.web.HTTPNotFound()
+            raise aiohttp.web.HTTPNotFound
 
         headers = {"Upload-Offset": str(len(server.data))}
         if server.metadata is not None:
@@ -109,16 +115,16 @@ async def tus_server(aiohttp_server: pytest_aiohttp.AiohttpServer) -> MockTusSer
         body = await request.read()
 
         if server.data is None:
-            raise aiohttp.web.HTTPUnprocessableEntity()
+            raise aiohttp.web.HTTPUnprocessableEntity
 
         if int(request.headers["Upload-Offset"]) != len(server.data):
-            raise aiohttp.web.HTTPConflict()
+            raise aiohttp.web.HTTPConflict
 
         server.retries_upload -= 1
         if server.retries_upload > 0:
             # Pretend we did only receive half of the data before an error happend.
             server.data.extend(body[: len(body) // 2])
-            raise aiohttp.web.HTTPInternalServerError()
+            raise aiohttp.web.HTTPInternalServerError
 
         if server.drop_upload:
             # Simulate the situation where the server can only store a subset
@@ -175,10 +181,18 @@ class EOFBytesIO:
     def __init__(self, b: io.BytesIO) -> None:
         self._b = b
 
-    def seek(self, *args: Any, **kwargs: Any) -> int:
+    def seek(
+        self,
+        *args: Any,  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401
+    ) -> int:
         return self._b.seek(*args, **kwargs)
 
-    def read(self, *args: Any, **kwargs: Any) -> bytes:
+    def read(
+        self,
+        *args: Any,  # noqa: ANN401 ARG002
+        **kwargs: Any,  # noqa: ANN401 ARG002
+    ) -> bytes:
         return b""
 
 
@@ -195,7 +209,7 @@ class TusServer:
     url: yarl.URL
 
     # The path of the certificate file of the server, if TLS is used.
-    certificate: Optional[str] = None
+    certificate: str | None = None
 
 
 def random_port() -> int:
@@ -213,16 +227,16 @@ async def start_process(
     """Start a subprocess."""
 
     proc = await asyncio.create_subprocess_exec(program, *args, cwd=cwd)
-    logger.info(f"process {program} started")
+    logger.info("process '%s' started", program)
 
     try:
         await asyncio.sleep(1.0)
         yield
     finally:
-        logger.info(f"terminating process '{program}'...")
+        logger.info("terminating process '%s'...", program)
         proc.terminate()
         await proc.communicate()
-        logger.info(f"process '{program}' terminated")
+        logger.info("process '%s' terminated", program)
 
 
 @pytest_asyncio.fixture(loop_scope="module")
@@ -231,7 +245,7 @@ async def tusd(pytestconfig: pytest.Config) -> AsyncGenerator[TusServer]:
 
     Assumes that the tusd executable is located in the pytest rootdir.
     """
-    host = "0.0.0.0"
+    host = "0.0.0.0"  # noqa: S104
     port = random_port()
     basepath = "/files/"
 
@@ -241,7 +255,7 @@ async def tusd(pytestconfig: pytest.Config) -> AsyncGenerator[TusServer]:
             ["-host", host, "-port", str(port), "-base-path", basepath],
             cwd=d,
         ):
-            logger.info(f"tusd started, listening on port {port}")
+            logger.info("tusd started, listening on port %s", port)
             yield TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
 
 
@@ -313,7 +327,7 @@ async def nginx_proxy(tusd: TusServer) -> AsyncGenerator[TusServer]:
             f.write(conf)
 
         async with start_process("nginx", ["-p", d, "-c", conf_file], cwd=d):
-            logger.info(f"nginx started, listening on port {port}")
+            logger.info("nginx started, listening on port %s", port)
             yield TusServer(
                 yarl.URL(f"https://localhost:{port}"),
                 certificate,

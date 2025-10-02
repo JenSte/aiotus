@@ -16,8 +16,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class TestAiotusClients:
     def test_no_command(self, capsys: pytest.CaptureFixture[str]) -> None:
-        with unittest.mock.patch("sys.argv", [""]):
-            assert aiotus.entrypoint.main() == 1
+        assert aiotus.entrypoint.main([]) == 1
 
         _, stderr = capsys.readouterr()
         lines = stderr.splitlines(keepends=False)
@@ -29,21 +28,15 @@ class TestAiotusClients:
     ) -> None:
         conf = aiotus.RetryConfiguration(1, 0.001, ssl=False)
         defaults = (None, None, conf, None, 4 * 1024 * 1024)
-        with (
-            unittest.mock.patch.object(aiotus.upload, "__defaults__", defaults),
-            unittest.mock.patch(
-                "sys.argv", ["", "--debug", "upload", str(tusd.url) + "x", __file__]
-            ),
-        ):
-            assert aiotus.entrypoint.main() == 1
+        argv = ["--debug", "upload", str(tusd.url) + "x", __file__]
+        with unittest.mock.patch.object(aiotus.upload, "__defaults__", defaults):
+            assert aiotus.entrypoint.main(argv) == 1
 
-        with unittest.mock.patch(
-            "sys.argv", ["", "upload", str(tusd.url), __file__ + "x"]
-        ):
-            assert aiotus.entrypoint.main() == 1
+        argv = ["upload", str(tusd.url), __file__ + "x"]
+        assert aiotus.entrypoint.main(argv) == 1
 
-        with unittest.mock.patch("sys.argv", ["", "upload", str(tusd.url), __file__]):
-            assert aiotus.entrypoint.main() == 0
+        argv = ["upload", str(tusd.url), __file__]
+        assert aiotus.entrypoint.main(argv) == 0
 
         stdout, _ = capsys.readouterr()
         url = stdout.splitlines(keepends=False)[0]
@@ -53,8 +46,8 @@ class TestAiotusClients:
             "mime_type: text/x-python",
         ]
 
-        with unittest.mock.patch("sys.argv", ["", "metadata", url]):
-            assert aiotus.entrypoint.main() == 0
+        argv = ["metadata", url]
+        assert aiotus.entrypoint.main(argv) == 0
 
         stdout, _ = capsys.readouterr()
         lines = stdout.splitlines(keepends=False)
@@ -62,8 +55,8 @@ class TestAiotusClients:
 
         assert lines == expected_output
 
-        with unittest.mock.patch("sys.argv", ["", "--debug", "metadata", url]):
-            assert aiotus.entrypoint.main() == 0
+        argv = ["--debug", "metadata", url]
+        assert aiotus.entrypoint.main(argv) == 0
 
         stdout, _ = capsys.readouterr()
         lines = stdout.splitlines(keepends=False)
@@ -73,26 +66,22 @@ class TestAiotusClients:
     def test_additional_metadata(
         self, capsys: pytest.CaptureFixture[str], tusd: conftest.TusServer
     ) -> None:
-        with unittest.mock.patch(
-            "sys.argv",
-            [
-                "",
-                "upload",
-                "--metadata",
-                "key1=value1",
-                "--metadata",
-                "key2",
-                str(tusd.url),
-                __file__,
-            ],
-        ):
-            assert aiotus.entrypoint.main() == 0
+        argv = [
+            "upload",
+            "--metadata",
+            "key1=value1",
+            "--metadata",
+            "key2",
+            str(tusd.url),
+            __file__,
+        ]
+        assert aiotus.entrypoint.main(argv) == 0
 
         stdout, _ = capsys.readouterr()
         url = stdout.splitlines(keepends=False)[0]
 
-        with unittest.mock.patch("sys.argv", ["", "metadata", url]):
-            assert aiotus.entrypoint.main() == 0
+        argv = ["metadata", url]
+        assert aiotus.entrypoint.main(argv) == 0
 
         stdout, _ = capsys.readouterr()
         lines = stdout.splitlines(keepends=False)

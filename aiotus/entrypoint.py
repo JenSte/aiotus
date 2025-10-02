@@ -8,8 +8,12 @@ import logging
 import mimetypes
 import pathlib
 import sys
+from typing import TYPE_CHECKING
 
 from . import retry
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Callable
 
 
 def _upload(args: argparse.Namespace) -> int:
@@ -48,8 +52,8 @@ def _metadata(args: argparse.Namespace) -> int:
     """
     try:
         metadata = asyncio.run(retry.metadata(args.location))
-        # Silence mypy, it does not detect the type 'asyncio.run()' returns.
-        assert isinstance(metadata, dict)  # noqa: S101
+        if metadata is None:
+            return 1
 
         for k, v in metadata.items():
             if v is None:
@@ -112,4 +116,5 @@ def main(argv: list[str]) -> int:
         parser.print_help(file=sys.stderr)
         return 1
 
-    return args.func(args)  # type: ignore[no-any-return]
+    func: Callable[[argparse.Namespace], int] = args.func
+    return func(args)

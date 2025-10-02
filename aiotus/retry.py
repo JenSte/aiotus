@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import dataclasses
-import sys
-from contextlib import AbstractAsyncContextManager
-from typing import TYPE_CHECKING, BinaryIO, Callable, TypeVar
+from typing import TYPE_CHECKING
 
 import aiohttp
 import tenacity
@@ -16,32 +15,9 @@ from . import common, core, creation
 from .log import logger
 
 if TYPE_CHECKING:  # pragma: no cover
-    from collections.abc import Iterable, Mapping
-    from types import TracebackType
-
-T = TypeVar("T")
-
-if sys.version_info >= (3, 10):
-    # 'contextlib.nullcontext' supports async beginning with Python 3.10.
-    from contextlib import nullcontext as asyncnullcontext
-else:
-
-    class asyncnullcontext(AbstractAsyncContextManager[T]):  # noqa: N801
-        """Asynchronous version of 'contextlib.nullcontext'."""
-
-        def __init__(self, aenter_result: T) -> None:  # noqa: D107
-            self._aenter_result = aenter_result
-
-        async def __aenter__(self) -> T:  # noqa: D105
-            return self._aenter_result
-
-        async def __aexit__(  # noqa: D105
-            self,
-            exc_type: type[BaseException] | None,
-            exc_value: BaseException | None,
-            traceback: TracebackType | None,
-        ) -> None:
-            return None
+    from collections.abc import Callable, Iterable, Mapping
+    from contextlib import AbstractAsyncContextManager
+    from typing import BinaryIO
 
 
 @dataclasses.dataclass
@@ -167,7 +143,7 @@ async def upload(  # noqa: PLR0913
         if client_session is None:
             ctx = aiohttp.ClientSession()
         else:
-            ctx = asyncnullcontext(client_session)
+            ctx = contextlib.nullcontext(client_session)
 
         async with ctx as session:
             async for attempt in retrying_create:
@@ -239,7 +215,7 @@ async def metadata(
         if client_session is None:
             ctx = aiohttp.ClientSession()
         else:
-            ctx = asyncnullcontext(client_session)
+            ctx = contextlib.nullcontext(client_session)
 
         async with ctx as session:
             async for attempt in retrying_metadata:
@@ -323,7 +299,7 @@ async def upload_multiple(  # noqa: C901 PLR0913
         if client_session is None:
             ctx = aiohttp.ClientSession()
         else:
-            ctx = asyncnullcontext(client_session)
+            ctx = contextlib.nullcontext(client_session)
 
         async with ctx as session:
             #

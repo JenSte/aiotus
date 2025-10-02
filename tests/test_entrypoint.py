@@ -87,3 +87,8 @@ class TestAiotusClients:
         lines = stdout.splitlines(keepends=False)
         assert "key1: value1" in lines
         assert "key2" in lines
+
+    def test_no_metadata(self) -> None:
+        argv = ["metadata", "http://example.com"]
+        with unittest.mock.patch("aiotus.retry.metadata", return_value=None):
+            assert aiotus.entrypoint.main(argv) == 1

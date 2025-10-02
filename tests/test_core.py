@@ -3,41 +3,39 @@
 from __future__ import annotations
 
 import binascii
-import io
+from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
-import pytest_aiohttp
 
 import aiotus
 
-from . import conftest
+if TYPE_CHECKING:  # pragma: no cover
+    import io
+
+    import pytest_aiohttp
+
+    from . import conftest
 
 
 class TestOffset:
     async def test_offset_exceptions(
-        self, aiohttp_server: pytest_aiohttp.AiohttpServer, memory_file: io.BytesIO
+        self, aiohttp_server: pytest_aiohttp.AiohttpServer
     ) -> None:
         """Check for the different exceptions that can be thrown."""
 
-        async def handler_not_found(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
-            raise aiohttp.web.HTTPNotFound()
+        async def handler_not_found(_: aiohttp.web.Request) -> aiohttp.web.Response:
+            raise aiohttp.web.HTTPNotFound
 
-        async def handler_no_offset(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
-            raise aiohttp.web.HTTPOk()
+        async def handler_no_offset(_: aiohttp.web.Request) -> aiohttp.web.Response:
+            raise aiohttp.web.HTTPOk
 
-        async def handler_wrong_offset(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
+        async def handler_wrong_offset(_: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {"Upload-Offset": "xyz"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
         async def handler_negative_offset(
-            request: aiohttp.web.Request,
+            _: aiohttp.web.Request,
         ) -> aiohttp.web.Response:
             headers = {"Upload-Offset": "-1"}
             raise aiohttp.web.HTTPOk(headers=headers)
@@ -50,39 +48,36 @@ class TestOffset:
         server = await aiohttp_server(app)
 
         # Check if status code is checked correctly.
-        with pytest.raises(aiohttp.ClientResponseError):
-            location = server.make_url("/not_found")
-
-            async with aiohttp.ClientSession() as session:
+        location = server.make_url("/not_found")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiohttp.ClientResponseError):
                 await aiotus.core.offset(session, location)
 
         # Check if the check for the "Upload-Offset" header is working.
-        with pytest.raises(aiotus.ProtocolError) as excinfo:
-            location = server.make_url("/no_offset")
-
-            async with aiohttp.ClientSession() as session:
+        location = server.make_url("/no_offset")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(
+                aiotus.ProtocolError,
+                match=r'HTTP header "Upload-Offset" not included in server response.',
+            ):
                 await aiotus.core.offset(session, location)
-
-        assert 'HTTP header "Upload-Offset" not included in server response.' == str(
-            excinfo.value
-        )
 
         # Check if the offset value is checked properly.
-        with pytest.raises(aiotus.ProtocolError) as excinfo:
-            location = server.make_url("/wrong_offset")
-
-            async with aiohttp.ClientSession() as session:
+        location = server.make_url("/wrong_offset")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(
+                aiotus.ProtocolError,
+                match='Unable to convert "Upload-Offset" header',
+            ):
                 await aiotus.core.offset(session, location)
 
-        assert 'Unable to convert "Upload-Offset" header' in str(excinfo.value)
-
-        with pytest.raises(aiotus.ProtocolError) as excinfo:
-            location = server.make_url("/negative_offset")
-
-            async with aiohttp.ClientSession() as session:
+        location = server.make_url("/negative_offset")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(
+                aiotus.ProtocolError,
+                match='Unable to convert "Upload-Offset" header',
+            ):
                 await aiotus.core.offset(session, location)
-
-        assert 'Unable to convert "Upload-Offset" header' in str(excinfo.value)
 
     async def test_offset_functional(
         self, aiohttp_server: pytest_aiohttp.AiohttpServer
@@ -145,20 +140,18 @@ class TestMetadata:
     async def test_metadata(self, aiohttp_server: pytest_aiohttp.AiohttpServer) -> None:
         """Check the 'core.metadata()' function."""
 
-        async def handler_no_metadata(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
+        async def handler_no_metadata(_: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {"Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION}
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_invalid(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        async def handler_invalid(_: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {
                 "Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION,
                 "Upload-Metadata": "k1 djE",
             }
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_valid(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        async def handler_valid(_: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {
                 "Tus-Resumable": aiotus.common.TUS_PROTOCOL_VERSION,
                 "Upload-Metadata": "k1, k2 dmFsdWU=",
@@ -175,9 +168,8 @@ class TestMetadata:
             md = await aiotus.core.metadata(session, server.make_url("/no_metadata"))
             assert md == {}
 
-            with pytest.raises(aiotus.ProtocolError) as excinfo:
+            with pytest.raises(aiotus.ProtocolError, match="Unable to parse metadata"):
                 await aiotus.core.metadata(session, server.make_url("/invalid"))
-                assert "Unable to parse metadata" in str(excinfo.value)
 
             md = await aiotus.core.metadata(session, server.make_url("/valid"))
             assert md == {"k1": None, "k2": b"value"}
@@ -284,24 +276,20 @@ class TestConfiguration:
     ) -> None:
         """Check for the different exceptions that can be thrown."""
 
-        async def handler_not_found(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
-            raise aiohttp.web.HTTPNotFound()
+        async def handler_not_found(_: aiohttp.web.Request) -> aiohttp.web.Response:
+            raise aiohttp.web.HTTPNotFound
 
-        async def handler_no_version(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
-            raise aiohttp.web.HTTPOk()
+        async def handler_no_version(_: aiohttp.web.Request) -> aiohttp.web.Response:
+            raise aiohttp.web.HTTPOk
 
         async def handler_max_size_invalid(
-            request: aiohttp.web.Request,
+            _: aiohttp.web.Request,
         ) -> aiohttp.web.Response:
             headers = {"Tus-Version": "1.0.0", "Tus-Max-Size": "xyz"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
         async def handler_max_size_negative(
-            request: aiohttp.web.Request,
+            _: aiohttp.web.Request,
         ) -> aiohttp.web.Response:
             headers = {"Tus-Version": "1.0.0", "Tus-Max-Size": "-1"}
             raise aiohttp.web.HTTPOk(headers=headers)
@@ -313,28 +301,24 @@ class TestConfiguration:
         app.router.add_route("OPTIONS", "/max_size_negative", handler_max_size_negative)
         server = await aiohttp_server(app)
 
-        with pytest.raises(aiohttp.ClientResponseError):
-            url = server.make_url("/not_found")
-
-            async with aiohttp.ClientSession() as session:
+        url = server.make_url("/not_found")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiohttp.ClientResponseError):
                 await aiotus.core.configuration(session, url)
 
-        with pytest.raises(aiotus.ProtocolError):
-            url = server.make_url("/no_version")
-
-            async with aiohttp.ClientSession() as session:
+        url = server.make_url("/no_version")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiotus.ProtocolError):
                 await aiotus.core.configuration(session, url)
 
-        with pytest.raises(aiotus.ProtocolError):
-            url = server.make_url("/max_size_invalid")
-
-            async with aiohttp.ClientSession() as session:
+        url = server.make_url("/max_size_invalid")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiotus.ProtocolError):
                 await aiotus.core.configuration(session, url)
 
-        with pytest.raises(aiotus.ProtocolError):
-            url = server.make_url("/max_size_negative")
-
-            async with aiohttp.ClientSession() as session:
+        url = server.make_url("/max_size_negative")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiotus.ProtocolError):
                 await aiotus.core.configuration(session, url)
 
     async def test_configuration_function(
@@ -342,13 +326,11 @@ class TestConfiguration:
     ) -> None:
         """Test the normal functionality of the 'configuration()' function."""
 
-        async def handler_only_version(
-            request: aiohttp.web.Request,
-        ) -> aiohttp.web.Response:
+        async def handler_only_version(_: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {"Tus-Version": "1.0.0"}
             raise aiohttp.web.HTTPOk(headers=headers)
 
-        async def handler_all(request: aiohttp.web.Request) -> aiohttp.web.Response:
+        async def handler_all(_: aiohttp.web.Request) -> aiohttp.web.Response:
             headers = {
                 "Tus-Version": "1.0.0,0.9.9",
                 "Tus-Max-Size": "1024",

@@ -2,23 +2,27 @@
 
 from __future__ import annotations
 
-import io
+from typing import TYPE_CHECKING
 
 import aiohttp
 import pytest
-import pytest_aiohttp
 
 import aiotus
 
-from . import conftest
+if TYPE_CHECKING:  # pragma: no cover
+    import io
+
+    import pytest_aiohttp
+
+    from . import conftest
 
 
 class TestCreate:
     async def test_create_wrong_metadata(self, memory_file: io.BytesIO) -> None:
         """Check the different checks performed on metadata keys."""
 
-        with pytest.raises(ValueError) as excinfo:
-            metadata = {"k1": "v1".encode(), "k²": "v2".encode(), "k3": "v3".encode()}
+        metadata = {"k1": b"v1", "k²": b"v2", "k3": b"v3"}
+        with pytest.raises(ValueError, match="ASCII characters"):
             await aiotus.creation.create(
                 None,  # type: ignore[arg-type]
                 None,  # type: ignore[arg-type]
@@ -26,10 +30,8 @@ class TestCreate:
                 metadata,
             )
 
-        assert "ASCII characters" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            metadata = {"k1": "v1".encode(), "k 2": "v2".encode(), "k3": "v3".encode()}
+        metadata = {"k1": b"v1", "k 2": b"v2", "k3": b"v3"}
+        with pytest.raises(ValueError, match="spaces"):
             await aiotus.creation.create(
                 None,  # type: ignore[arg-type]
                 None,  # type: ignore[arg-type]
@@ -37,18 +39,14 @@ class TestCreate:
                 metadata,
             )
 
-        assert "spaces" in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            metadata = {"k1": "v1".encode(), "k2,": "v2".encode(), "k3": "v3".encode()}
+        metadata = {"k1": b"v1", "k2,": b"v2", "k3": b"v3"}
+        with pytest.raises(ValueError, match="commas"):
             await aiotus.creation.create(
                 None,  # type: ignore[arg-type]
                 None,  # type: ignore[arg-type]
                 memory_file,
                 metadata,
             )
-
-        assert "commas" in str(excinfo.value)
 
     async def test_create_wrong_status(
         self, aiohttp_server: pytest_aiohttp.AiohttpServer, memory_file: io.BytesIO
@@ -56,12 +54,12 @@ class TestCreate:
         """Check if status code is checked correctly."""
 
         async def handler_status_200(
-            request: aiohttp.web.Request,
+            _: aiohttp.web.Request,
         ) -> aiohttp.web.Response:
             return aiohttp.web.Response(status=200)
 
         async def handler_status_400(
-            request: aiohttp.web.Request,
+            _: aiohttp.web.Request,
         ) -> aiohttp.web.Response:
             return aiohttp.web.Response(status=400)
 
@@ -70,14 +68,14 @@ class TestCreate:
         app.router.add_route("POST", "/status_400", handler_status_400)
         server = await aiohttp_server(app)
 
-        with pytest.raises(aiotus.ProtocolError, match="Wrong status code"):
-            endpoint = server.make_url("/status_200")
-            async with aiohttp.ClientSession() as session:
+        endpoint = server.make_url("/status_200")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiotus.ProtocolError, match="Wrong status code"):
                 await aiotus.creation.create(session, endpoint, memory_file, {})
 
-        with pytest.raises(aiohttp.ClientResponseError) as excinfo:
-            endpoint = server.make_url("/status_400")
-            async with aiohttp.ClientSession() as session:
+        endpoint = server.make_url("/status_400")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiohttp.ClientResponseError) as excinfo:
                 await aiotus.creation.create(session, endpoint, memory_file, {})
         assert excinfo.value.status == 400
 
@@ -87,18 +85,17 @@ class TestCreate:
         """Check if the check for the "Location" header is working."""
 
         async def handler_no_location(
-            request: aiohttp.web.Request,
+            _: aiohttp.web.Request,
         ) -> aiohttp.web.Response:
-            raise aiohttp.web.HTTPCreated()
+            raise aiohttp.web.HTTPCreated
 
         app = aiohttp.web.Application()
         app.router.add_route("POST", "/no_location", handler_no_location)
         server = await aiohttp_server(app)
 
-        with pytest.raises(aiotus.ProtocolError) as excinfo:
-            endpoint = server.make_url("/no_location")
-
-            async with aiohttp.ClientSession() as session:
+        endpoint = server.make_url("/no_location")
+        async with aiohttp.ClientSession() as session:
+            with pytest.raises(aiotus.ProtocolError) as excinfo:
                 await aiotus.creation.create(session, endpoint, memory_file, {})
 
         assert 'no "Location" header' in str(excinfo.value)
@@ -108,7 +105,7 @@ class TestCreate:
     ) -> None:
         """Test the normal functionality of the upload creation."""
 
-        metadata = {"k1": "1".encode(), "k2": "2²".encode(), "k-3": "three".encode()}
+        metadata = {"k1": b"1", "k2": "2²".encode(), "k-3": b"three"}
 
         endpoint = tus_server.server.make_url("/files")
 

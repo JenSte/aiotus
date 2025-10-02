@@ -10,14 +10,17 @@ from __future__ import annotations
 import asyncio
 import base64
 import io
-from collections.abc import Mapping
-from typing import BinaryIO, Optional
+from typing import TYPE_CHECKING, BinaryIO
 
-import aiohttp
 import yarl
 
 from . import common
 from .log import logger
+
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Mapping
+
+    import aiohttp
 
 
 def _check_metadata_keys(metadata: common.Metadata) -> None:
@@ -27,13 +30,16 @@ def _check_metadata_keys(metadata: common.Metadata) -> None:
     """
     for k in metadata:
         if not k.isascii():
-            raise ValueError("Metadata keys must only contain ASCII characters.")
+            msg = "Metadata keys must only contain ASCII characters."
+            raise ValueError(msg)
 
         if " " in k:
-            raise ValueError("Metadata keys must not contain spaces.")
+            msg = "Metadata keys must not contain spaces."
+            raise ValueError(msg)
 
         if "," in k:
-            raise ValueError("Metadata keys must not contain commas.")
+            msg = "Metadata keys must not contain commas."
+            raise ValueError(msg)
 
 
 def encode_metadata(metadata: common.Metadata) -> str:
@@ -44,7 +50,7 @@ def encode_metadata(metadata: common.Metadata) -> str:
     """
     _check_metadata_keys(metadata)
 
-    def encode_value(value: Optional[bytes]) -> str:
+    def encode_value(value: bytes | None) -> str:
         if value is None:
             return ""
 
@@ -56,13 +62,13 @@ def encode_metadata(metadata: common.Metadata) -> str:
     return ",".join(pairs)
 
 
-async def create(
+async def create(  # noqa: PLR0913
     session: aiohttp.ClientSession,
     url: yarl.URL,
-    file: Optional[BinaryIO],
+    file: BinaryIO | None,
     metadata: common.Metadata,
-    ssl: common.SSLArgument = True,
-    headers: Optional[Mapping[str, str]] = None,
+    ssl: common.SSLArgument = True,  # noqa: FBT002
+    headers: Mapping[str, str] | None = None,
 ) -> yarl.URL:
     """Create an upload.
 
@@ -90,14 +96,12 @@ async def create(
     logger.debug("Creating upload...")
     async with await session.post(url, headers=tus_headers, ssl=ssl) as response:
         response.raise_for_status()
-        if response.status != 201:
-            raise common.ProtocolError(
-                f"Wrong status code {response.status}, expected 201."
-            )
+        if response.status != 201:  # noqa: PLR2004
+            msg = f"Wrong status code {response.status}, expected 201."
+            raise common.ProtocolError(msg)
 
         if "Location" not in response.headers:
-            raise common.ProtocolError(
-                'Upload created, but no "Location" header in response.'
-            )
+            msg = 'Upload created, but no "Location" header in response.'
+            raise common.ProtocolError(msg)
 
         return yarl.URL(response.headers["Location"])

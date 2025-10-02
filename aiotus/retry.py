@@ -5,16 +5,8 @@ from __future__ import annotations
 import asyncio
 import dataclasses
 import sys
-from collections.abc import Iterable, Mapping
-from types import TracebackType
-from typing import (
-    AsyncContextManager,
-    BinaryIO,
-    Callable,
-    Optional,
-    TypeVar,
-    Union,
-)
+from contextlib import AbstractAsyncContextManager
+from typing import TYPE_CHECKING, BinaryIO, Callable, TypeVar
 
 import aiohttp
 import tenacity
@@ -23,6 +15,10 @@ import yarl
 from . import common, core, creation
 from .log import logger
 
+if TYPE_CHECKING:  # pragma: no cover
+    from collections.abc import Iterable, Mapping
+    from types import TracebackType
+
 T = TypeVar("T")
 
 if sys.version_info >= (3, 10):
@@ -30,7 +26,7 @@ if sys.version_info >= (3, 10):
     from contextlib import nullcontext as asyncnullcontext
 else:
 
-    class asyncnullcontext(AsyncContextManager[T]):  # noqa: N801
+    class asyncnullcontext(AbstractAsyncContextManager[T]):  # noqa: N801
         """Asynchronous version of 'contextlib.nullcontext'."""
 
         def __init__(self, aenter_result: T) -> None:  # noqa: D107
@@ -41,9 +37,9 @@ else:
 
         async def __aexit__(  # noqa: D105
             self,
-            exc_type: Optional[type[BaseException]],
-            exc_value: Optional[BaseException],
-            traceback: Optional[TracebackType],
+            exc_type: type[BaseException] | None,
+            exc_value: BaseException | None,
+            traceback: TracebackType | None,
         ) -> None:
             return None
 
@@ -73,7 +69,7 @@ class RetryConfiguration:
     the `aiohttp documentation
     <https://docs.aiohttp.org/en/stable/client_advanced.html#ssl-control-for-tcp-sockets>`_
     for the different meanings.
-    """  # noqa: E501
+    """
 
 
 def _make_log_before_function(s: str) -> Callable[[tenacity.RetryCallState], None]:
@@ -119,7 +115,7 @@ def _make_retrying(s: str, config: RetryConfiguration) -> tenacity.AsyncRetrying
     )
 
 
-def _sanitize_metadata(metadata: Optional[common.Metadata]) -> common.Metadata:
+def _sanitize_metadata(metadata: common.Metadata | None) -> common.Metadata:
     """Make sure the given optional metadata object is valid."""
     if metadata is None:
         metadata = {}
@@ -132,15 +128,15 @@ def _sanitize_metadata(metadata: Optional[common.Metadata]) -> common.Metadata:
     return metadata
 
 
-async def upload(
-    endpoint: Union[str, yarl.URL],
+async def upload(  # noqa: PLR0913
+    endpoint: str | yarl.URL,
     file: BinaryIO,
-    metadata: Optional[common.Metadata] = None,
-    client_session: Optional[aiohttp.ClientSession] = None,
-    config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Mapping[str, str]] = None,
+    metadata: common.Metadata | None = None,
+    client_session: aiohttp.ClientSession | None = None,
+    config: RetryConfiguration | None = None,
+    headers: Mapping[str, str] | None = None,
     chunksize: int = 4 * 1024 * 1024,
-) -> Optional[yarl.URL]:
+) -> yarl.URL | None:
     """Upload a file to a tus server.
 
     This function creates an upload on the server and then uploads
@@ -157,6 +153,9 @@ async def upload(
     :param chunksize: The size of individual chunks to upload at a time.
     :return: The location where the file was uploaded to (if the upload succeeded).
     """
+    if config is None:
+        config = RetryConfiguration()
+
     url = yarl.URL(endpoint)
     metadata = _sanitize_metadata(metadata)
 
@@ -164,7 +163,7 @@ async def upload(
     retrying_upload_file = _make_retrying("upload", config)
 
     try:
-        ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]
+        ctx: aiohttp.ClientSession | AbstractAsyncContextManager[aiohttp.ClientSession]
         if client_session is None:
             ctx = aiohttp.ClientSession()
         else:
@@ -203,18 +202,18 @@ async def upload(
         logger.error(
             f"Unable to upload file, even after retrying: {e.last_attempt.exception()}"
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Unable to upload file: {e}")
 
     return None
 
 
 async def metadata(
-    endpoint: Union[str, yarl.URL],
-    client_session: Optional[aiohttp.ClientSession] = None,
-    config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Mapping[str, str]] = None,
-) -> Optional[common.Metadata]:
+    endpoint: str | yarl.URL,
+    client_session: aiohttp.ClientSession | None = None,
+    config: RetryConfiguration | None = None,
+    headers: Mapping[str, str] | None = None,
+) -> common.Metadata | None:
     """Read back the metadata of an upload.
 
     See :data:`aiotus.Metadata` for details on how metadata is handled in the
@@ -228,12 +227,15 @@ async def metadata(
     :param headers: Optional headers used in the request.
     :return: The metadata associated with the upload.
     """
+    if config is None:
+        config = RetryConfiguration()
+
     url = yarl.URL(endpoint)
 
     retrying_metadata = _make_retrying("query metadata", config)
 
     try:
-        ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]
+        ctx: aiohttp.ClientSession | AbstractAsyncContextManager[aiohttp.ClientSession]
         if client_session is None:
             ctx = aiohttp.ClientSession()
         else:
@@ -253,13 +255,13 @@ async def metadata(
     return None
 
 
-async def _upload_partial(
+async def _upload_partial(  # noqa: PLR0913
     semaphore: asyncio.Semaphore,
-    endpoint: Union[str, yarl.URL],
+    endpoint: str | yarl.URL,
     file: BinaryIO,
-    client_session: Optional[aiohttp.ClientSession],
+    client_session: aiohttp.ClientSession | None,
     config: RetryConfiguration,
-    headers: Optional[Mapping[str, str]],
+    headers: Mapping[str, str] | None,
     chunksize: int,
 ) -> str:
     """Upload a single part of an upload with the "concatenation" extension.
@@ -275,21 +277,22 @@ async def _upload_partial(
         )
 
     if url is None:
-        raise RuntimeError("Unable to upload part.")
+        msg = "Unable to upload part."
+        raise RuntimeError(msg)
 
     return url.path
 
 
-async def upload_multiple(
-    endpoint: Union[str, yarl.URL],
+async def upload_multiple(  # noqa: C901 PLR0913
+    endpoint: str | yarl.URL,
     files: Iterable[BinaryIO],
-    metadata: Optional[common.Metadata] = None,
-    client_session: Optional[aiohttp.ClientSession] = None,
-    config: RetryConfiguration = RetryConfiguration(),
-    headers: Optional[Mapping[str, str]] = None,
+    metadata: common.Metadata | None = None,
+    client_session: aiohttp.ClientSession | None = None,
+    config: RetryConfiguration | None = None,
+    headers: Mapping[str, str] | None = None,
     chunksize: int = 4 * 1024 * 1024,
     parallel_uploads: int = 3,
-) -> Optional[yarl.URL]:
+) -> yarl.URL | None:
     """Upload multiple files using the "concatenation" extension.
 
     Upload multiple files and then use the "concatenation" protocol extension
@@ -306,6 +309,9 @@ async def upload_multiple(
     :return: The location of the final (concatenated) file on the server.
     :raises RuntimeError: If the server does not support the "concatenation" extension.
     """
+    if config is None:
+        config = RetryConfiguration()
+
     url = yarl.URL(endpoint)
     metadata = _sanitize_metadata(metadata)
 
@@ -313,7 +319,7 @@ async def upload_multiple(
     retrying_create = _make_retrying("upload creation", config)
 
     try:
-        ctx: Union[aiohttp.ClientSession, AsyncContextManager[aiohttp.ClientSession]]
+        ctx: aiohttp.ClientSession | AbstractAsyncContextManager[aiohttp.ClientSession]
         if client_session is None:
             ctx = aiohttp.ClientSession()
         else:
@@ -330,9 +336,8 @@ async def upload_multiple(
                     )
 
             if "concatenation" not in server_config.protocol_extensions:
-                raise RuntimeError(
-                    'Server does not support the "concatenation" extension.'
-                )
+                msg = 'Server does not support the "concatenation" extension.'
+                raise RuntimeError(msg)  # noqa: TRY301
 
             #
             # Upload the individual parts.
@@ -357,7 +362,8 @@ async def upload_multiple(
                     if not t.done():
                         t.cancel()
 
-                raise RuntimeError(f"Upload of a part failed: {e}")
+                msg = f"Upload of a part failed: {e}"
+                raise RuntimeError(msg) from e
 
             concat_header = "final;" + " ".join(paths)
 
@@ -381,7 +387,7 @@ async def upload_multiple(
         logger.error(
             f"Unable to upload files, even after retrying: {e.last_attempt.exception()}"
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error(f"Unable to upload files: {e}")
 
     return None

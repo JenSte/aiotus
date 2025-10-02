@@ -44,8 +44,10 @@ arg-type-hints-in-docstring = false
 check-return-types = false
 
 [tool.ruff.lint]
-extend-select = ["D", "I", "N"]
+select=["ALL"]
 ignore = [
+    # This rule collides with the formatter.
+    "COM812",
     # Collides with D211.
     "D203",
     # Collides with D212.
@@ -53,7 +55,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D"]
+"tests/*" = ["ASYNC230", "D", "PLR2004", "PTH", "S101", "SLF001"]
 
 [tool.setuptools]
 packages = ["aiotus"]

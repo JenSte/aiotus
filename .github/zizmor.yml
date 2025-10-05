@@ -3,6 +3,7 @@ rules:
     config:
       policies:
         "actions/*": ref-pin
+        "astral-sh/setup-uv": ref-pin
         "codecov/codecov-action": ref-pin
         "pypa/gh-action-pypi-publish": ref-pin
         "SonarSource/sonarqube-scan-action": ref-pin

@@ -35,10 +35,10 @@ jobs:
         make lint
     - name: Run mypy
       run: |
-        mypy --strict aiotus tests
+        make mypy-check
     - name: Run zizmor
       run: |
-        zizmor .github/workflows
+        make zizmor-check
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Download tusd
@@ -70,7 +70,7 @@ jobs:
     - name: Generate documentation
       if: matrix.python-version != '3.10'
       run: |
-        make -C docs html
+        make doc
   # Upload coverage information to external services. A separate job is used because
   # SonarCloud does not like to be triggered multiple times for the same commit.
   upload-coverage:

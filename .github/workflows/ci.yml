@@ -31,7 +31,7 @@ jobs:
 
     - name: Install dependencies with apt
       run: |
-        sudo apt-get install nginx-core openssl
+        sudo apt-get install nginx openssl
 
     - name: Install Python dependencies
       run: |

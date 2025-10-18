@@ -10,4 +10,5 @@ build:
 
 python:
   install:
-    - requirements: requirements.txt
+    - pip install --upgrade pip
+    - pip install --group dev

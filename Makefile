@@ -51,8 +51,8 @@ tox:
 
 .venv:
 	uv venv
-	uv pip install -r requirements.txt
-	uv pip install -e .
+	uv pip install --group dev
+	uv pip install --editable .
 
 TUSD_VERSION = v2.8.0
 TUSD_ARCH = amd64

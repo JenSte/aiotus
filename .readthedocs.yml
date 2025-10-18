@@ -9,5 +9,5 @@ build:
     python: "3.11"
   jobs:
     post_create_environment:
-      - pip install uv
-      - uv pip install --system --group dev
+      - pip install --upgrade pip
+      - pip install --group dev

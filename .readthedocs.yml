@@ -7,7 +7,10 @@ build:
   os: ubuntu-24.04
   tools:
     python: "3.11"
-  jobs:
-    create_environment:
-      - pip install --upgrade pip
-      - pip install --group dev
+
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev

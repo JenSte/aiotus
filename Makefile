@@ -49,12 +49,10 @@ tox:
 	    tox
 	coverage combine .coverage.*
 
-venv:
-	python3 -m venv venv
-	. venv/bin/activate; \
-	    pip3 install --upgrade pip; \
-	    pip3 install -r requirements.txt; \
-	    pip3 install -e .
+.venv:
+	uv venv
+	uv pip install -r requirements.txt
+	uv pip install -e .
 
 TUSD_VERSION = v2.8.0
 TUSD_ARCH = amd64
@@ -103,7 +101,7 @@ veryclean: clean
 	    tests/nginx.key \
 	    tests/selfsigned.crt
 	@rm -rf \
-	    venv
+	    .venv
 
 .PHONY: \
 	clean \

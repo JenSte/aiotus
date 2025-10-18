@@ -4,16 +4,16 @@ from __future__ import annotations
 
 import ssl
 from collections.abc import Mapping
-from typing import Final
+from typing import Final, TypeAlias
 
 import aiohttp
 
 # The version of the tus protocol we implement.
 TUS_PROTOCOL_VERSION: Final = "1.0.0"
 
-SSLArgument = bool | ssl.SSLContext | aiohttp.Fingerprint
+SSLArgument: TypeAlias = bool | ssl.SSLContext | aiohttp.Fingerprint
 
-Metadata = Mapping[str, bytes | None]
+Metadata: TypeAlias = Mapping[str, bytes | None]
 
 
 class ProtocolError(Exception):

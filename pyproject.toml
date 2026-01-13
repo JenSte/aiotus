@@ -47,7 +47,7 @@ dev = [
     "Sphinx==8.2.3; python_version>'3.11'",
     "sphinx-autodoc-typehints==3.1.0; python_version>'3.11'",
     "tenacity==9.1.2",
-    "zizmor==1.19.0",
+    "zizmor==1.20.0",
 ]
 
 [project.urls]

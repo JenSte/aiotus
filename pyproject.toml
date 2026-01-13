@@ -44,8 +44,8 @@ dev = [
     "pytest==9.0.2",
     "pyupgrade==3.21.2",
     "ruff==0.14.11",
-    "Sphinx==8.2.3; python_version>'3.11'",
-    "sphinx-autodoc-typehints==3.1.0; python_version>'3.11'",
+    "Sphinx==9.1.0; python_version>'3.11'",
+    "sphinx-autodoc-typehints==3.6.2; python_version>'3.11'",
     "tenacity==9.1.2",
     "zizmor==1.20.0",
 ]

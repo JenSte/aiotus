@@ -43,7 +43,7 @@ dev = [
     "pytest-cov==7.0.0",
     "pytest==9.0.2",
     "pyupgrade==3.21.2",
-    "ruff==0.14.14",
+    "ruff==0.15.0",
     "Sphinx==9.1.0; python_version>'3.11'",
     "sphinx-autodoc-typehints==3.6.2; python_version>'3.11'",
     "tenacity==9.1.2",

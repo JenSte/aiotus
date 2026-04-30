@@ -6,11 +6,10 @@ import dataclasses
 import io
 import logging
 import math
-import os.path
-import tempfile
 from typing import TYPE_CHECKING
 
 import aiohttp
+import anyio
 import pytest
 import pytest_asyncio
 import yarl
@@ -243,14 +242,16 @@ async def tusd(
     port = unused_tcp_port_factory()
     basepath = "/files/"
 
-    with tempfile.TemporaryDirectory() as d:
-        async with start_process(
+    async with (
+        anyio.TemporaryDirectory() as d,
+        start_process(
             str(pytestconfig.rootpath / "tusd"),
             ["-host", host, "-port", str(port), "-base-path", basepath],
             cwd=d,
-        ):
-            logger.info("tusd started, listening on port %s", port)
-            yield TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
+        ),
+    ):
+        logger.info("tusd started, listening on port %s", port)
+        yield TusServer(yarl.URL(f"http://{host}:{port}{basepath}"))
 
 
 # Template for the nginx configuration file. Stripped-down from
@@ -305,26 +306,26 @@ async def nginx_proxy(
     tusd: TusServer, unused_tcp_port_factory: Callable[[], int]
 ) -> AsyncGenerator[TusServer]:
     """Start an nginx proxy in front of tusd that does TLS termination."""
-    test_dir = os.path.dirname(os.path.abspath(__file__))
-    certificate = os.path.join(test_dir, "selfsigned.crt")
+    test_dir = (await anyio.Path(__file__).absolute()).parent
+    certificate = test_dir / "selfsigned.crt"
     port = unused_tcp_port_factory()
 
     fmt = {
         "crt": certificate,
-        "key": os.path.join(test_dir, "nginx.key"),
+        "key": str(test_dir / "nginx.key"),
         "port": port,
         "tusd_url": str(tusd.url),
     }
     conf = _nginx_conf.format(**fmt)
 
-    with tempfile.TemporaryDirectory() as d:
-        conf_file = os.path.join(d, "nginx.conf")
-        with open(conf_file, "w") as f:
-            f.write(conf)
+    async with anyio.TemporaryDirectory() as d:
+        conf_file = anyio.Path(d) / "nginx.conf"
+        async with await conf_file.open("w") as f:
+            await f.write(conf)
 
-        async with start_process("nginx", ["-p", d, "-c", conf_file], cwd=d):
+        async with start_process("nginx", ["-p", d, "-c", str(conf_file)], cwd=d):
             logger.info("nginx started, listening on port %s", port)
             yield TusServer(
                 yarl.URL(f"https://localhost:{port}"),
-                certificate,
+                str(certificate),
             )

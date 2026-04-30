@@ -41,7 +41,7 @@ dev = [
     "pytest-aiohttp==1.1.0",
     "pytest-asyncio==1.3.0",
     "pytest-cov==7.1.0",
-    "pytest==9.0.2",
+    "pytest==9.0.3",
     "pyupgrade==3.21.2",
     "ruff==0.14.14",
     "Sphinx==9.1.0; python_version>'3.11'",

@@ -31,7 +31,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "aiohttp==3.13.5",
+    "aiohttp==3.14.0",
     "anyio==4.13.0",
     "build==1.5.0",
     "bump2version==1.0.1",

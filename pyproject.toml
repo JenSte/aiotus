@@ -38,7 +38,7 @@ dev = [
     "coverage[toml]==7.14.1",
     "mypy==2.1.0",
     "pycodestyle==2.14.0",
-    "pydoclint==0.8.4",
+    "pydoclint==0.8.6",
     "pytest-aiohttp==1.1.0",
     "pytest-asyncio==1.4.0",
     "pytest-cov==7.1.0",

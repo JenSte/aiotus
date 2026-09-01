@@ -35,7 +35,7 @@ dev = [
     "anyio==4.14.2",
     "build==1.6.0",
     "bump2version==1.0.1",
-    "coverage[toml]==7.15.4",
+    "coverage[toml]==7.16.0",
     "mypy==2.3.1",
     "pycodestyle==2.14.0",
     "pydoclint==0.9.1",

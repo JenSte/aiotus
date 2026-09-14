@@ -33,7 +33,7 @@ dependencies = [
 dev = [
     "aiohttp==3.14.3",
     "anyio==4.15.1",
-    "build==1.6.0",
+    "build==1.6.1",
     "bump2version==1.0.1",
     "coverage[toml]==7.16.0",
     "mypy==2.3.1",

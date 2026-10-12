@@ -69,6 +69,8 @@ select=["ALL"]
 ignore = [
     # This rule collides with the formatter.
     "COM812",
+    # No per-file copyright notices.
+    "CPY001",
     # Collides with D211.
     "D203",
     # Collides with D212.

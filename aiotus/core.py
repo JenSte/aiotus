@@ -150,7 +150,7 @@ async def metadata(
             raise common.ProtocolError(msg) from e
 
 
-async def upload_buffer(  # noqa: PLR0913
+async def upload_buffer(  # noqa: PLR0913 PLR0917
     session: aiohttp.ClientSession,
     location: yarl.URL,
     buffer: BinaryIO,

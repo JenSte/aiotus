@@ -63,7 +63,7 @@ def encode_metadata(metadata: common.Metadata) -> str:
     return ",".join(pairs)
 
 
-async def create(  # noqa: PLR0913
+async def create(  # noqa: PLR0913 PLR0917
     session: aiohttp.ClientSession,
     url: yarl.URL,
     file: BinaryIO | None,

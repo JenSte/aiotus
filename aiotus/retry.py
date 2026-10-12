@@ -104,7 +104,7 @@ def _sanitize_metadata(metadata: common.Metadata | None) -> common.Metadata:
     return metadata
 
 
-async def upload(  # noqa: PLR0913
+async def upload(  # noqa: PLR0913 PLR0917
     endpoint: str | yarl.URL,
     file: BinaryIO,
     metadata: common.Metadata | None = None,
@@ -231,7 +231,7 @@ async def metadata(
     return None
 
 
-async def _upload_partial(  # noqa: PLR0913
+async def _upload_partial(  # noqa: PLR0913 PLR0917
     semaphore: asyncio.Semaphore,
     endpoint: str | yarl.URL,
     file: BinaryIO,
@@ -259,7 +259,7 @@ async def _upload_partial(  # noqa: PLR0913
     return url.path
 
 
-async def upload_multiple(  # noqa: C901 PLR0913
+async def upload_multiple(  # noqa: C901 PLR0913 PLR0917
     endpoint: str | yarl.URL,
     files: Iterable[BinaryIO],
     metadata: common.Metadata | None = None,

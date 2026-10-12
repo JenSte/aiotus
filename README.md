@@ -65,7 +65,7 @@ metadata = await aiotus.metadata(location)
 
 ## Requirements
 
-* [Python](https://www.python.org) ≥ 3.10
+* [Python](https://www.python.org) ≥ 3.11
 * [aiohttp](https://pypi.org/project/aiohttp)
 * [tenacity](https://pypi.org/project/tenacity)
 

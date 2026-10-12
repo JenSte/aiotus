@@ -13,7 +13,6 @@ license = {text = "Apache-2.0"}
 
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -23,7 +22,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP",
     "Typing :: Typed",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "aiohttp",
     "tenacity>=6.2.0",
@@ -106,7 +105,7 @@ log_cli_level = "INFO"
 local_scheme = "dirty-tag"
 
 [tool.tox]
-env_list = ["py310", "py311", "py312", "py313", "py314"]
+env_list = ["py311", "py312", "py313", "py314"]
 
 [tool.tox.env_run_base]
 allowlist_externals = ["make"]

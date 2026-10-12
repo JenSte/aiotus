@@ -37,7 +37,7 @@ coverage_html/index.html: .coverage
 pyupgrade:
 	@echo Running pyupgrade...
 	pyupgrade \
-	    --py310-plus \
+	    --py311-plus \
 	    aiotus/*.py tests/*.py
 
 doc:

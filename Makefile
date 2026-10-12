@@ -54,7 +54,7 @@ tox:
 	uv pip install --group dev
 	uv pip install --editable .
 
-TUSD_VERSION = v2.8.0
+TUSD_VERSION = v2.10.1
 TUSD_ARCH = amd64
 TUSD_ARCHIVE = tusd_linux_${TUSD_ARCH}.tar.gz
 

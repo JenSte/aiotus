@@ -47,7 +47,7 @@ dev = [
     "ruff==0.17.0",
     "Sphinx==9.1.0; python_version>'3.11'",
     "sphinx-autodoc-typehints==3.6.2; python_version>'3.11'",
-    "tenacity==9.1.4",
+    "tenacity==9.2.1",
     "zizmor==1.30.1",
 ]
 

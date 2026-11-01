@@ -120,7 +120,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     - name: Upload coverage information to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         directory: coverage/
         token: ${{ secrets.CODECOV_TOKEN }}
